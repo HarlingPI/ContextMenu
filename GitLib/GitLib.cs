@@ -12,7 +12,26 @@ using System.Windows.Input;
 
 public static class GitLib
 {
+    private static Regex moduleexp = new Regex("path = [\\w]+", RegexOptions.Compiled);
     private static Regex fatal = new Regex("fatal|error", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    public static List<string> SearchModules()
+    {
+        string path = System.Environment.CurrentDirectory;
+        //先查找gitmodules文件
+        string mapper = path + "/.gitmodules";
+        List<string> modules = new List<string>();
+        if (File.Exists(mapper))
+        {
+            string content = File.ReadAllText(mapper);
+            foreach (Match item in moduleexp.Matches(content))
+            {
+                modules.Add($"{path}/{item.Value[7..]}");
+            }
+        }
+        modules.Add(path);
+        return modules;
+    }
     public static void ExcuteCommand(string directory, string[] commands)
     {
         Console.ForegroundColor = ConsoleColor.White;
@@ -21,7 +40,7 @@ public static class GitLib
         {
             int count = 1;
             var cmd = commands[i];
-            
+
             bool needretry = true;
             while (needretry)
             {
@@ -29,7 +48,7 @@ public static class GitLib
                 {
                     FileName = "git",
                     Arguments = cmd,
-                    WorkingDirectory=directory,
+                    WorkingDirectory = directory,
                     // 重定向标准输出
                     RedirectStandardOutput = true,
                     // 重定向标准错误
