@@ -59,33 +59,39 @@ public static class GitLib
                     CreateNoWindow = true
                 };
                 // 启动进程
-                using (Process process = new Process { StartInfo = startinfo })
+                string output = StartProcess(startinfo);
+                if (fatal.IsMatch(output))
                 {
-                    process.Start();
-
-                    string output = null;
-                    // 读取标准输出
-                    output += process.StandardOutput.ReadToEnd();
-                    // 读取标准错误
-                    output += process.StandardError.ReadToEnd();
-                    // 等待进程完成
-                    process.WaitForExit();
-
-                    if (fatal.IsMatch(output))
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine(output);
-                        Console.WriteLine($"第{count++}次处理失败,失败命令{cmd},将开始尝试{count}次处理!");
-                        needretry = true;
-                    }
-                    else
-                    {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine(output);
-                        needretry = false;
-                    }
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(output);
+                    Console.WriteLine($"第{count++}次处理失败,失败命令{cmd},将开始尝试{count}次处理!");
+                    needretry = true;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine(output);
+                    needretry = false;
                 }
             }
         }
+    }
+
+    public static string StartProcess(ProcessStartInfo startinfo)
+    {
+        string output = null;
+        using (Process process = new Process { StartInfo = startinfo })
+        {
+            process.Start();
+
+            // 读取标准输出
+            output += process.StandardOutput.ReadToEnd();
+            // 读取标准错误
+            output += process.StandardError.ReadToEnd();
+            // 等待进程完成
+            process.WaitForExit();
+        }
+
+        return output;
     }
 }
