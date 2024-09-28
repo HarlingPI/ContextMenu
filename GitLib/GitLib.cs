@@ -15,11 +15,13 @@ public static class GitLib
     private static Regex fatal = new Regex("fatal|error", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     public static void ExcuteCommand(string directory, string[] commands)
     {
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine($"即将开始处理项目'{directory}'");
         for (int i = 0; i < commands.Length; i++)
         {
             int count = 1;
             var cmd = commands[i];
-
+            
             bool needretry = true;
             while (needretry)
             {
