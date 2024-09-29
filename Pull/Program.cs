@@ -11,16 +11,8 @@
             {
                 Console.WriteLine(modules[i]);
             }
-            string pullcmd = "pull";
-            Console.WriteLine("请输入本次操作名称:");
-            string? optinename = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(optinename))
-            {
-                optinename = "Commit by scripts";
-            }
-            Console.WriteLine($"即将开始执行操作{optinename}");
 
-            string[] commands = new[] { pullcmd };
+            string[] commands = new[] { "pull" };
 
             for (int i = 0; i < modules.Count; i++)
             {
