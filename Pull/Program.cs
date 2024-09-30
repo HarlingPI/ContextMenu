@@ -20,7 +20,7 @@
             }
 
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("'push'已完成,请按任意键退出!");
+            Console.WriteLine("'pull'已完成,请按任意键退出!");
             Console.Read();
         }
     }
