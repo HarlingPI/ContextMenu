@@ -32,7 +32,7 @@ public static class GitLib
         modules.Add(path);
         return modules;
     }
-    public static void ExcuteCommand(string directory, string[] commands)
+    public static void ExcuteCommand(string directory, string[] commands, bool setworkdir = true)
     {
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine($"即将开始处理项目'{directory}'");
@@ -48,7 +48,6 @@ public static class GitLib
                 {
                     FileName = "git",
                     Arguments = cmd,
-                    WorkingDirectory = directory,
                     // 重定向标准输出
                     RedirectStandardOutput = true,
                     // 重定向标准错误
@@ -58,6 +57,10 @@ public static class GitLib
                     // 不创建窗口
                     CreateNoWindow = true
                 };
+                if (setworkdir)
+                {
+                    startinfo.WorkingDirectory = directory;
+                }
                 // 启动进程
                 string output = StartProcess(startinfo);
                 if (fatal.IsMatch(output))
