@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pull", "Pull\Pull.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitLib", "GitLib\GitLib.csproj", "{08A0C0E7-366A-4665-927D-57A169E81739}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Config", "Config\Config.csproj", "{66F9E22A-BAE6-4468-9CCB-71023B640004}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Config", "Config\Config.csproj", "{66F9E22A-BAE6-4468-9CCB-71023B640004}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clone", "Clone\Clone.csproj", "{7AFF9AEF-8B0F-4CDF-8843-4C03AEACA82E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{66F9E22A-BAE6-4468-9CCB-71023B640004}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{66F9E22A-BAE6-4468-9CCB-71023B640004}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{66F9E22A-BAE6-4468-9CCB-71023B640004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AFF9AEF-8B0F-4CDF-8843-4C03AEACA82E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AFF9AEF-8B0F-4CDF-8843-4C03AEACA82E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AFF9AEF-8B0F-4CDF-8843-4C03AEACA82E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AFF9AEF-8B0F-4CDF-8843-4C03AEACA82E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
