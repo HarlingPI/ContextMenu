@@ -67,7 +67,7 @@ public static class GitLib
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(output);
-                    Console.WriteLine($"第{count++}次处理失败,失败命令{cmd},将开始尝试{count}次处理!");
+                    Console.WriteLine($"第{count++}次处理失败,失败命令{cmd},将开始尝试第{count}次处理!");
                     needretry = true;
                 }
                 else
