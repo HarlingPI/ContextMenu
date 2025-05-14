@@ -24,7 +24,7 @@
             }
 
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("'clone'已完成,请按任意键退出!");
+            Console.WriteLine("'clone'已完成,按任意键退出!");
             Console.Read();
         }
 

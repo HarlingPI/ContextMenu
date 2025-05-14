@@ -97,4 +97,14 @@ public static class GitLib
 
         return output;
     }
+
+    public static string GetFolderFromUrl(string? url)
+    {
+        string folder;
+        int lst = url.LastIndexOf('/');
+        folder = url[(lst + 1)..url.Length];
+        lst = folder.LastIndexOf('.');
+        folder = folder[..lst];
+        return folder;
+    }
 }
