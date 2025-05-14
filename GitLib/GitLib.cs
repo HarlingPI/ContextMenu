@@ -26,7 +26,7 @@ public static class GitLib
             string content = File.ReadAllText(mapper);
             foreach (Match item in moduleexp.Matches(content))
             {
-                modules.Add($"{path}/{item.Value[7..]}");
+                modules.Add($"{path}{item.Value[7..]}");
             }
         }
         modules.Add(path);
