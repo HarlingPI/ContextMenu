@@ -17,9 +17,9 @@ public static class GitLib
 
     public static List<string> SearchModules()
     {
-        string path = System.Environment.CurrentDirectory;
+        string path = AppDomain.CurrentDomain.BaseDirectory;
         //先查找gitmodules文件
-        string mapper = path + "/.gitmodules";
+        string mapper = path + ".gitmodules";
         List<string> modules = new List<string>();
         if (File.Exists(mapper))
         {
