@@ -18,9 +18,12 @@ namespace GitTool.Commands
         {
         }
 
-        public override bool Excute(params string[] args)
+        public override void Excute(string[] projects, params string[] args)
         {
-            throw new NotImplementedException();
+            string folder = GitLib.GetProjectNameFromUrl(args[0]);
+            string path = Path.Combine(WorkingFolder, folder);
+            string cmd = $"clone --recursive {args[0]} {path}";
+            GitLib.ExcuteCommand(path, new[] { cmd }, false);
         }
     }
 }

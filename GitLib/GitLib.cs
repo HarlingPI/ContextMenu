@@ -15,31 +15,53 @@ public static class GitLib
     private static Regex moduleexp = new Regex("path = [\\w]+", RegexOptions.Compiled);
     private static Regex fatal = new Regex("fatal|error", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    public static List<string> SearchModules()
+    public static string[] FindProjects(string folder)
     {
-        string path = AppDomain.CurrentDomain.BaseDirectory;
-        //先查找gitmodules文件
-        string mapper = path + ".gitmodules";
-        List<string> modules = new List<string>();
+        var projects = new List<string>();
+        SearchSubProjects(folder, projects);
+        return projects.ToArray();
+    }
+    private static void SearchSubProjects(string folder, List<string> result)
+    {
+        //检查是否有子模块
+        var mapper = Path.Combine(folder, ".gitmodules");
         if (File.Exists(mapper))
         {
-            string content = File.ReadAllText(mapper);
-            foreach (Match item in moduleexp.Matches(content))
+            var content = File.ReadAllText(mapper);
+            foreach (Match match in moduleexp.Matches(content))
             {
-                modules.Add($"{path}{item.Value[7..]}");
+                var subproject = Path.Combine(folder, match.Value[7..]);
+                //检查子文件夹
+                SearchSubProjects(subproject, result);
+                result.Add(subproject);
+            }
+            result.Add(folder);
+        }
+        else
+        {
+            var project = Path.Combine(folder, ".git");
+            if (Directory.Exists(project))
+            {
+                result.Add(folder);
+            }
+            //遍历子文件夹
+            var subs = Directory.GetDirectories(folder);
+            for (int i = 0; i < subs.Length; i++)
+            {
+                SearchSubProjects(subs[i], result);
             }
         }
-        modules.Add(path);
-        return modules;
     }
     public static void ExcuteCommand(string directory, string[] commands, bool setworkdir = true)
     {
+        var orgcolor = Console.ForegroundColor;
         Console.ForegroundColor = ConsoleColor.White;
-        Console.WriteLine($"即将开始处理项目'{directory}'");
         for (int i = 0; i < commands.Length; i++)
         {
             int count = 1;
             var cmd = commands[i];
+
+            Console.WriteLine(cmd);
 
             bool needretry = true;
             while (needretry)
@@ -67,7 +89,7 @@ public static class GitLib
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(output);
-                    Console.WriteLine($"第{count++}次处理失败,失败命令{cmd},将开始尝试第{count}次处理!");
+                    Console.WriteLine($"第{count++}次处理失败,将开始尝试第{count}次处理!");
                     needretry = true;
                 }
                 else
@@ -78,6 +100,7 @@ public static class GitLib
                 }
             }
         }
+        Console.ForegroundColor = orgcolor;
     }
 
     public static string StartProcess(ProcessStartInfo startinfo)
@@ -98,7 +121,7 @@ public static class GitLib
         return output;
     }
 
-    public static string GetFolderFromUrl(string? url)
+    public static string GetProjectNameFromUrl(string? url)
     {
         string folder;
         int lst = url.LastIndexOf('/');

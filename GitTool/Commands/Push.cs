@@ -18,9 +18,29 @@ namespace GitTool.Commands
         {
         }
 
-        public override bool Excute(params string[] args)
+        public override void Excute(string[] projects, params string[] args)
         {
-            throw new NotImplementedException();
+            var addcmd = "add .";
+            var commitcmd = "commit -m \"{0}\"";
+            var pushcmd = "push";
+
+            var option = "";
+            if (args != null && args.Length > 0)
+            {
+                option = args[0];
+            }
+
+            if (string.IsNullOrWhiteSpace(option))
+            {
+                option = "Commit by scripts";
+            }
+            commitcmd = string.Format(commitcmd, option);
+            string[] commands = new[] { addcmd, commitcmd, pushcmd };
+
+            for (int i = 0; i < projects.Length; i++)
+            {
+                GitLib.ExcuteCommand(projects[i], commands);
+            }
         }
     }
 }

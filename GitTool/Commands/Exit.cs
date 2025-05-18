@@ -8,24 +8,19 @@ namespace GitTool.Commands
 {
     /// <summary>
     /// 作者:   Harling
-    /// 时间:   2025/5/18 11:15:52
+    /// 时间:   2025/5/18 21:30:50
     /// 备注:   此文件通过PIToolKit模板创建
     /// </summary>
     /// <remarks></remarks>
-    public class Pull : Command
+    public class Exit : Command
     {
-        public Pull(string workingFolder) : base(workingFolder)
+        public Exit(string workingFolder) : base(workingFolder)
         {
         }
 
         public override void Excute(string[] projects, params string[] args)
         {
-            string[] commands = new[] { "pull" };
-
-            for (int i = 0; i < projects.Length; i++)
-            {
-                GitLib.ExcuteCommand(projects[i], commands);
-            }
+            Environment.Exit(0);
         }
     }
 }

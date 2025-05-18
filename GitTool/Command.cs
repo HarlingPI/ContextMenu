@@ -25,8 +25,9 @@ namespace GitTool
         /// <summary>
         /// 执行命令
         /// </summary>
+        /// <param name="projects"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        public abstract bool Excute(params string[] args);
+        public abstract void Excute(string[] projects, params string[] args);
     }
 }
