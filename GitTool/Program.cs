@@ -19,7 +19,6 @@ namespace GitTool
             {
                 Console.WriteLine(projects[i]);
             }
-            //
             while (true)
             {
                 //输出工作路径

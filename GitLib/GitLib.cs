@@ -55,12 +55,12 @@ public static class GitLib
     public static void ExcuteCommand(string directory, string[] commands, bool setworkdir = true)
     {
         var orgcolor = Console.ForegroundColor;
-        Console.ForegroundColor = ConsoleColor.White;
         for (int i = 0; i < commands.Length; i++)
         {
             int count = 1;
             var cmd = commands[i];
 
+            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine(cmd);
 
             bool needretry = true;
