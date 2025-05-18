@@ -44,10 +44,12 @@ namespace GitTool
                 else Environment.Exit(0);
             }
         }
+        /// <summary>
+        /// 命令分割正则表达式，空格分割，""中的空格不分割
+        /// </summary>
         private static Regex splitexp = new Regex(@"(\""[^\""]*\"")|(\S+)", RegexOptions.Compiled);
         private static string[] SplitCommand(string command)
         {
-            //return command.Split(' ');
             return splitexp
                 .Split(command)
                 .Select(w => w.Trim())
