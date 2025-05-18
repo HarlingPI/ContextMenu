@@ -1,11 +1,18 @@
 ﻿
+using System.IO;
+using System.Reflection;
+
 namespace GitTool
 {
     internal class Program
     {
-        private static string[] cmds = { "clone", "pull", "push" };
+        private static Dictionary<string, Command> cmds = new Dictionary<string, Command>();
+        //private static string[] cmds = { "clone", "pull", "push" };
         static void Main(string[] args)
         {
+            var working = InitCommands();
+            Console.WriteLine(working);
+
             var cmd = "";
             while (string.IsNullOrEmpty(cmd))
             {
@@ -17,23 +24,47 @@ namespace GitTool
                 }
             }
 
-            switch (cmd)
-            {
-                case "clone":
-                    Clone();
-                    break;
-                case "pull":
-                    Pull();
-                    break;
-                case "push":
-                    Push();
-                    break;
-            }
+            //switch (cmd)
+            //{
+            //    case "clone":
+            //        Clone();
+            //        break;
+            //    case "pull":
+            //        Pull();
+            //        break;
+            //    case "push":
+            //        Push();
+            //        break;
+            //}
 
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine($"'{cmd}'已完成,请按任意键退出!");
+            //Console.ForegroundColor = ConsoleColor.White;
+            //Console.WriteLine($"'{cmd}'已完成,请按任意键退出!");
             Console.Read();
         }
+
+        private static string InitCommands()
+        {
+            var cmdtype = typeof(Command);
+
+            var types = cmdtype
+                .Assembly
+                .GetTypes()
+                .Where(t => t.IsSubclassOf(cmdtype))
+                .Where(t => !t.IsAbstract)
+                .ToArray();
+
+            var working = AppDomain.CurrentDomain.BaseDirectory;
+            working = working[0..(working.Length - 1)];
+
+            for (int i = 0; i < types.Length; i++)
+            {
+                var type = types[i];
+                var command = (Command)Activator.CreateInstance(type, working);
+                cmds.Add(type.Name.ToLower(), command);
+            }
+            return working;
+        }
+
         private static void Clone()
         {
             string? url = null;
