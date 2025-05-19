@@ -23,7 +23,7 @@ namespace GitTool.Commands
             var option = args.Where(a => a.StartsWith("\"") && a.EndsWith("\"")).FirstOrDefault();
             if (string.IsNullOrWhiteSpace(option))
             {
-                option = "Commit by scripts";
+                option = "\"Commit by scripts\"";
             }
             else
             {
