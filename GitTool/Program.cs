@@ -32,10 +32,10 @@ namespace GitTool
 
                 if (!string.IsNullOrEmpty(typein))
                 {
-                    var words = SplitCommand(typein.ToLower().Trim());
+                    var words = SplitCommand(typein.Trim());
                     var cmdname = words[0];
                     if (cmdname == "exit") allcmds["exit"].Excute(null);
-                    else if (allcmds.TryGetValue(cmdname, out var command))
+                    else if (allcmds.TryGetValue(cmdname.ToLower(), out var command))
                     {
                         command.Excute(projects, words[1..]);
                     }
@@ -53,7 +53,6 @@ namespace GitTool
             return splitexp
                 .Split(command)
                 .Select(w => w.Trim())
-                .Select(w => w.Replace("\"", ""))
                 .Where(w => !string.IsNullOrEmpty(w))
                 .ToArray();
         }

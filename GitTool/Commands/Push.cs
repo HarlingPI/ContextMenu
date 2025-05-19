@@ -20,21 +20,20 @@ namespace GitTool.Commands
 
         public override void Excute(string[] projects, params string[] args)
         {
-            var addcmd = "add .";
-            var commitcmd = "commit -m \"{0}\"";
-            var pushcmd = "push";
-
-            var option = "";
-            if (args != null && args.Length > 0)
-            {
-                option = args[0];
-            }
-
+            var option = args.Where(a => a.StartsWith("\"") && a.EndsWith("\"")).FirstOrDefault();
             if (string.IsNullOrWhiteSpace(option))
             {
                 option = "Commit by scripts";
             }
-            commitcmd = string.Format(commitcmd, option);
+            else
+            {
+                args = args.Where(a => a != option).ToArray();
+            }
+
+            var addcmd = "add .";
+            var commitcmd = $"commit -m {option}";
+            var pushcmd = $"push {string.Join(" ", args)}";
+
             string[] commands = new[] { addcmd, commitcmd, pushcmd };
 
             for (int i = 0; i < projects.Length; i++)

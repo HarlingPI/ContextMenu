@@ -61,7 +61,7 @@ public static class GitLib
             var cmd = commands[i];
 
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine(cmd);
+            Console.WriteLine($"\"{cmd}\":{directory}");
 
             bool needretry = true;
             while (needretry)
