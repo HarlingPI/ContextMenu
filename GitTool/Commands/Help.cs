@@ -14,19 +14,6 @@ namespace GitTool.Commands
     /// <remarks></remarks>
     public class Help : Command
     {
-        private static string[] list;
-        static Help()
-        {
-            var cmdtype = typeof(Command);
-
-            list = cmdtype
-                .Assembly
-                .GetTypes()
-                .Where(t => t.IsSubclassOf(cmdtype))
-                .Where(t => !t.IsAbstract)
-                .Select(t => t.Name)
-                .ToArray();
-        }
         public Help(string workingFolder) : base(workingFolder)
         {
         }
@@ -36,9 +23,10 @@ namespace GitTool.Commands
             var orgcolor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("All Commands:");
-            for (int i = 0; i < list.Length; i++)
+            var names = Program.GetCommandsNames();
+            for (int i = 0; i < names.Length; i++)
             {
-                Console.WriteLine($"\t{list[i]}");
+                Console.WriteLine($"\t{names[i]}");
             }
             Console.ForegroundColor = orgcolor;
         }

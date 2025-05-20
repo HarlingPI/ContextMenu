@@ -112,5 +112,13 @@ namespace GitTool
             }
             return working;
         }
+        /// <summary>
+        /// 获取所有指令名称
+        /// </summary>
+        /// <returns></returns>
+        public static string[] GetCommandsNames()
+        {
+            return allcmds.Keys.OrderBy(x => x).ToArray();
+        }
     }
 }
