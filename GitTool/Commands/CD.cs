@@ -20,7 +20,13 @@ namespace GitTool.Commands
 
         public override void Excute(string[] projects, params string[] args)
         {
-            
+            var folder = "";
+            if (args != null && args.Length > 0)
+            {
+                folder = args[0];
+                folder = folder.Replace("\"", "");
+            }
+            Program.InitProgram(folder);
         }
     }
 }
