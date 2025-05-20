@@ -4,26 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GitTool.Commands
+namespace GitKit.Commands
 {
     /// <summary>
     /// 作者:   Harling
-    /// 时间:   2025/5/19 19:15:36
+    /// 时间:   2025/5/18 21:30:50
     /// 备注:   此文件通过PIToolKit模板创建
     /// </summary>
     /// <remarks></remarks>
-    public class Add : Command
+    public class Exit : Command
     {
-        public Add(string workingFolder) : base(workingFolder)
+        public Exit(string workingFolder) : base(workingFolder)
         {
         }
 
         public override void Excute(string[] projects, params string[] args)
         {
-            for (int i = 0; i < projects.Length; i++)
-            {
-                GitLib.ExcuteCommand(projects[i], new[] { "add ." });
-            }
+            Environment.Exit(0);
         }
     }
 }

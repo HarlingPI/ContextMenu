@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GitTool
+namespace GitKit
 {
     /// <summary>
     /// 作者:   Harling
