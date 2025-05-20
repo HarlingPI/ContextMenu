@@ -34,8 +34,7 @@ namespace GitTool
                 {
                     var words = SplitCommand(typein.Trim());
                     var cmdname = words[0];
-                    if (cmdname == "exit") allcmds["exit"].Excute(null);
-                    else if (allcmds.TryGetValue(cmdname.ToLower(), out var command))
+                    if (allcmds.TryGetValue(cmdname.ToLower(), out var command))
                     {
                         command.Excute(projects, words[1..]);
                     }
