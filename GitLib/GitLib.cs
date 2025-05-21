@@ -96,7 +96,7 @@ public static class GitLib
                 }
                 // 启动进程
                 StartProcess(startinfo, out var exitcode, out string output);
-                needretry = exitcode != 0 || errorexp.IsMatch(output);
+                needretry = /*exitcode != 0 || */errorexp.IsMatch(output);
 
                 if (needretry)
                 {

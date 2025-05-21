@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace GitKit
@@ -13,6 +14,8 @@ namespace GitKit
         private static string[] projects;
         static void Main(string[] args)
         {
+            AnsiUtils.EnableAnsiEscapeCodes();
+
             InitProgram();
             while (true)
             {
@@ -58,17 +61,26 @@ namespace GitKit
         /// <param name="folder"></param>
         public static void InitProgram(string folder = null)
         {
+            Console.WriteLine("Searching…");
             //获取工作路径
             working = SetAndGetWorkingFolder(folder);
             //初始化所有指令
             InitCommands(working);
             //查找当前目录下的所有Git项目
             projects = GitLib.FindProjects(working);
+            //清除上一行
+            ClearLastLine();
             //输出所有找到的Git项目
             for (int i = 0; i < projects.Length; i++)
             {
                 Console.WriteLine(projects[i]);
             }
+        }
+        private static void ClearLastLine()
+        {
+            Console.Write("\x1B[1A\x1B[2K\r");
+            //强制刷新缓冲区
+            Console.Out.Flush(); 
         }
 
         private static string SetAndGetWorkingFolder(string folder = null)
