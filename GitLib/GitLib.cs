@@ -23,42 +23,45 @@ public static class GitLib
     }
     private static void SearchSubProjects(string folder, List<string> result)
     {
-        //检查是否有子模块
-        var mapper = Path.Combine(folder, ".gitmodules");
-        if (File.Exists(mapper))
+        var subfolders = new List<string>();
+        DeepFirstSearch(folder, subfolders);
+        //遍历子文件夹，判断是否为git项目
+        for (int i = 0; i < subfolders.Count; i++)
         {
-            var content = File.ReadAllText(mapper);
-            foreach (Match match in moduleexp.Matches(content))
-            {
-                var subproject = Path.Combine(folder, match.Value[7..]);
-                //检查子文件夹
-                SearchSubProjects(subproject, result);
-                result.Add(subproject);
-            }
-            result.Add(folder);
-        }
-        else
-        {
-            var project = Path.Combine(folder, ".git");
+            var subfolder = subfolders[i];
+            //判断是否为独立git项目
+            var project = Path.Combine(subfolder, ".git");
             if (Directory.Exists(project))
             {
-                result.Add(folder);
+                result.Add(subfolder);
             }
-            //遍历子文件夹
-            try
+            else
             {
-                var subs = Directory.GetDirectories(folder);
-                for (int i = 0; i < subs.Length; i++)
+                //检查是否有子模块
+                var mapper = Path.Combine(subfolder, ".gitmodules");
+                if (File.Exists(mapper))
                 {
-                    SearchSubProjects(subs[i], result);
+                    var content = File.ReadAllText(mapper);
+                    foreach (Match match in moduleexp.Matches(content))
+                    {
+                        var subproject = Path.Combine(subfolder, match.Value[7..]);
+                        //获取绝对子模块路径
+                        subproject = Path.GetFullPath(subproject);
+                        result.Add(subproject);
+                    }
+                    result.Add(subfolder);
                 }
             }
-            catch (Exception e)
-            {
-                if (e is UnauthorizedAccessException || e is IOException) return;
-                else throw;
-            }
         }
+    }
+    private static void DeepFirstSearch(string folder, List<string> result)
+    {
+        var subs = Directory.GetDirectories(folder);
+        for (int i = 0; i < subs.Length; i++)
+        {
+            DeepFirstSearch(subs[i], result);
+        }
+        result.Add(folder);
     }
     public static void ExcuteCommand(string directory, string[] commands, bool setworkdir = true)
     {
