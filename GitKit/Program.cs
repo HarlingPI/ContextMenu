@@ -24,6 +24,7 @@ namespace GitKit
                 Console.ForegroundColor = orgcolor;
 
                 var typein = Console.ReadLine();
+                Console.WriteLine();
 
                 if (!string.IsNullOrEmpty(typein))
                 {
