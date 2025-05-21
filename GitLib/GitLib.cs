@@ -45,10 +45,18 @@ public static class GitLib
                 result.Add(folder);
             }
             //遍历子文件夹
-            var subs = Directory.GetDirectories(folder);
-            for (int i = 0; i < subs.Length; i++)
+            try
             {
-                SearchSubProjects(subs[i], result);
+                var subs = Directory.GetDirectories(folder);
+                for (int i = 0; i < subs.Length; i++)
+                {
+                    SearchSubProjects(subs[i], result);
+                }
+            }
+            catch (Exception e)
+            {
+                if (e is UnauthorizedAccessException || e is IOException) return;
+                else throw;
             }
         }
     }
