@@ -20,7 +20,6 @@
 *.pidb
 *.pdb
 *.mdb
-/Publish
 
 # Crashlytics generated file
 crashlytics-build.properties
