@@ -22,7 +22,7 @@ namespace GitKit.Commands
         {
             var pushcmd = $"push {string.Join(" ", args)}";
 
-            var commands = new[] { pushcmd };
+            var commands = new[] { pushcmd.Trim() };
 
             for (int i = 0; i < projects.Length; i++)
             {

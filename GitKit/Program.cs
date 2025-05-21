@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace GitKit
@@ -14,6 +15,8 @@ namespace GitKit
         private static string[] projects;
         static void Main(string[] args)
         {
+            //注册非Unicode编码
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             AnsiUtils.EnableAnsiEscapeCodes();
 
             InitProgram();
