@@ -39,9 +39,6 @@ namespace GitKit
             }
         }
 
-        
-
-
         /// <summary>
         /// 命令分割正则表达式，空格分割，""中的空格不分割
         /// </summary>
