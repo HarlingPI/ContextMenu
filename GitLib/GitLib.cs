@@ -56,12 +56,27 @@ public static class GitLib
     }
     private static void DeepFirstSearch(string folder, List<string> result)
     {
-        var subs = Directory.GetDirectories(folder);
-        for (int i = 0; i < subs.Length; i++)
+        try
         {
-            DeepFirstSearch(subs[i], result);
+            var subs = Directory.GetDirectories(folder);
+            for (int i = 0; i < subs.Length; i++)
+            {
+                DeepFirstSearch(subs[i], result);
+            }
+            result.Add(folder);
         }
-        result.Add(folder);
+        catch (UnauthorizedAccessException)
+        {
+
+        }
+        catch(IOException)
+        {
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"未知错误: {ex.Message}");
+        }
     }
     public static void ExcuteCommand(string directory, string[] commands, bool setworkdir = true)
     {
