@@ -57,7 +57,7 @@ namespace Config
                     // 不创建窗口
                     CreateNoWindow = true
                 };
-                string output = GitLib.StartProcess(startinfo);
+                GitLib.StartProcess(startinfo,out var exitcode,out var output);
                 if (alreadyexp.IsMatch(output))
                 {
                     Console.ForegroundColor = ConsoleColor.Red;

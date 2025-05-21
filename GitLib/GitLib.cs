@@ -13,7 +13,7 @@ using System.Windows.Input;
 public static class GitLib
 {
     private static Regex moduleexp = new Regex("path = [\\w]+", RegexOptions.Compiled);
-    private static Regex fatal = new Regex("fatal|error", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static Regex errorexp = new Regex("fatal:|error:", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     public static string[] FindProjects(string folder)
     {
@@ -95,28 +95,28 @@ public static class GitLib
                     startinfo.WorkingDirectory = directory;
                 }
                 // 启动进程
-                string output = StartProcess(startinfo);
-                if (fatal.IsMatch(output))
+                StartProcess(startinfo, out var exitcode, out string output);
+                needretry = exitcode != 0 || errorexp.IsMatch(output);
+
+                if (needretry)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(output);
                     Console.WriteLine($"第{count++}次处理失败,将开始尝试第{count}次处理!");
-                    needretry = true;
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine(output);
-                    needretry = false;
                 }
             }
         }
         Console.ForegroundColor = orgcolor;
     }
 
-    public static string StartProcess(ProcessStartInfo startinfo)
+    public static void StartProcess(ProcessStartInfo startinfo, out int exitcode, out string output)
     {
-        string output = null;
+        output = "";
         using (Process process = new Process { StartInfo = startinfo })
         {
             process.Start();
@@ -127,9 +127,9 @@ public static class GitLib
             output += process.StandardError.ReadToEnd();
             // 等待进程完成
             process.WaitForExit();
-        }
 
-        return output;
+            exitcode = process.ExitCode;
+        }
     }
 
     public static string GetProjectNameFromUrl(string? url)
