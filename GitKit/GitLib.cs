@@ -85,6 +85,7 @@ namespace GitKit
 
         public static void ExcuteCommand(string directory, string command, uint retry = uint.MaxValue, bool setworkdir = true)
         {
+            command = command.Trim();
             var orgcolor = Console.ForegroundColor;
 
             Console.ForegroundColor = ConsoleColor.White;

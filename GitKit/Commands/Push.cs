@@ -20,7 +20,7 @@ namespace GitKit.Commands
 
         public override void Excute(string[] projects, uint retry, params string[] args)
         {
-            var pushcmd = $"push {string.Join(" ", args)}".Trim();
+            var pushcmd = $"push {string.Join(" ", args)}";
 
             for (int i = 0; i < projects.Length; i++)
             {
