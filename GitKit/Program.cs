@@ -59,7 +59,7 @@ namespace GitKit
             }
         }
 
-        private static Regex retryexp = new Regex(@"retry\:\d+", RegexOptions.Compiled);
+        private static Regex retryexp = new Regex(@"re\:\d+", RegexOptions.Compiled);
         private static Regex uintnexp = new Regex(@"\d+", RegexOptions.Compiled);
         private static uint GetRetry(ref string str)
         {
