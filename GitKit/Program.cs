@@ -34,13 +34,10 @@ namespace GitKit
 
                 if (!string.IsNullOrEmpty(typein))
                 {
+                    uint retry = GetRetry(ref typein);
+
                     var words = SplitCommand(typein.Trim());
                     var cmdname = words[0];
-
-                    if (GetRetry(words.Last(), out var retry))
-                    {
-                        words = words[0..(words.Length - 1)];
-                    }
 
                     if (allcmds.TryGetValue(cmdname.ToLower(), out var command))
                     {
@@ -54,6 +51,9 @@ namespace GitKit
                             GitLib.ExcuteCommand(projects[i], typein, retry);
                         }
                     }
+
+
+
                 }
                 else Environment.Exit(0);
             }
@@ -61,16 +61,15 @@ namespace GitKit
 
         private static Regex retryexp = new Regex(@"retry\:\d+", RegexOptions.Compiled);
         private static Regex uintnexp = new Regex(@"\d+", RegexOptions.Compiled);
-        private static bool GetRetry(string str, out uint retry)
+        private static uint GetRetry(ref string str)
         {
-            retry = uint.MaxValue;
             if (retryexp.IsMatch(str))
             {
                 var nstr = uintnexp.Match(str).Value;
-                retry = uint.Parse(nstr);
-                return true;
+                str = retryexp.Replace(str, "");
+                return uint.Parse(nstr);
             }
-            return false;
+            else return uint.MaxValue;
         }
         /// <summary>
         /// 命令分割正则表达式，空格分割，""中的空格不分割
