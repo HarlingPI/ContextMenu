@@ -18,8 +18,7 @@ namespace GitKit.Commands
         public CMD(string workingFolder) : base(workingFolder)
         {
         }
-
-        public override void Excute(string[] projects, params string[] args)
+        public override void Excute(string[] projects, uint retry, params string[] args)
         {
             var index = Array.IndexOf(args, "runas");
             var isas = index != -1;
@@ -33,6 +32,7 @@ namespace GitKit.Commands
                 Console.WriteLine(ExecuteAdmin(string.Join(' ', args)));
             }
         }
+
         private string ExecuteNormal(string command)
         {
             try
@@ -101,5 +101,7 @@ namespace GitKit.Commands
                 File.Delete(tempFile); 
             }
         }
+
+        
     }
 }

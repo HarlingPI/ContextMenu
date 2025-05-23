@@ -18,12 +18,12 @@ namespace GitKit.Commands
         {
         }
 
-        public override void Excute(string[] projects, params string[] args)
+        public override void Excute(string[] projects, uint retry, params string[] args)
         {
             string folder = GitLib.GetProjectNameFromUrl(args[0]);
             string path = Path.Combine(WorkingFolder, folder);
             string cmd = $"clone --recursive {args[0]} {path}";
-            GitLib.ExcuteCommand(path, new[] { cmd }, false);
+            GitLib.ExcuteCommand(path, cmd, retry, false);
         }
     }
 }

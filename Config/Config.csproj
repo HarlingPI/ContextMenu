@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GitLib\GitLib.csproj" />
+    <ProjectReference Include="..\GitKit\GitKit.csproj" />
   </ItemGroup>
 
 </Project>

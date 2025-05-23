@@ -18,7 +18,7 @@ namespace GitKit.Commands
         {
         }
 
-        public override void Excute(string[] projects, params string[] args)
+        public override void Excute(string[] projects, uint retry, params string[] args)
         {
             Environment.Exit(0);
         }

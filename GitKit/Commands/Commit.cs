@@ -18,7 +18,7 @@ namespace GitKit.Commands
         {
         }
 
-        public override void Excute(string[] projects, params string[] args)
+        public override void Excute(string[] projects, uint retry, params string[] args)
         {
             var option = args.Where(a => a.StartsWith("\"") && a.EndsWith("\"")).FirstOrDefault();
             if (string.IsNullOrWhiteSpace(option))
@@ -28,7 +28,7 @@ namespace GitKit.Commands
 
             for (int i = 0; i < projects.Length; i++)
             {
-                GitLib.ExcuteCommand(projects[i], new[] { $"commit -m {option}" });
+                GitLib.ExcuteCommand(projects[i], $"commit -m {option}", retry);
             }
         }
     }

@@ -18,15 +18,13 @@ namespace GitKit.Commands
         {
         }
 
-        public override void Excute(string[] projects, params string[] args)
+        public override void Excute(string[] projects, uint retry, params string[] args)
         {
-            var pushcmd = $"push {string.Join(" ", args)}";
-
-            var commands = new[] { pushcmd.Trim() };
+            var pushcmd = $"push {string.Join(" ", args)}".Trim();
 
             for (int i = 0; i < projects.Length; i++)
             {
-                GitLib.ExcuteCommand(projects[i], commands);
+                GitLib.ExcuteCommand(projects[i], pushcmd, retry);
             }
         }
     }

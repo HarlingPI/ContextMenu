@@ -26,8 +26,8 @@ namespace GitKit
         /// 执行命令
         /// </summary>
         /// <param name="projects"></param>
+        /// <param name="retry"></param>
         /// <param name="args"></param>
-        /// <returns></returns>
-        public abstract void Excute(string[] projects, params string[] args);
+        public abstract void Excute(string[] projects,uint retry, params string[] args);
     }
 }

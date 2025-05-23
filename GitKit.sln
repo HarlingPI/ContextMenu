@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitLib", "GitLib\GitLib.csproj", "{08A0C0E7-366A-4665-927D-57A169E81739}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Config", "Config\Config.csproj", "{66F9E22A-BAE6-4468-9CCB-71023B640004}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitTest", "GitTest\GitTest.csproj", "{6D76404C-D451-42B3-A645-60301D5603AC}"
@@ -17,10 +15,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{08A0C0E7-366A-4665-927D-57A169E81739}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{08A0C0E7-366A-4665-927D-57A169E81739}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{08A0C0E7-366A-4665-927D-57A169E81739}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{08A0C0E7-366A-4665-927D-57A169E81739}.Release|Any CPU.Build.0 = Release|Any CPU
 		{66F9E22A-BAE6-4468-9CCB-71023B640004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{66F9E22A-BAE6-4468-9CCB-71023B640004}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{66F9E22A-BAE6-4468-9CCB-71023B640004}.Release|Any CPU.ActiveCfg = Release|Any CPU

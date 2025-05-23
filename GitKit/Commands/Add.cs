@@ -18,11 +18,11 @@ namespace GitKit.Commands
         {
         }
 
-        public override void Excute(string[] projects, params string[] args)
+        public override void Excute(string[] projects, uint retry, params string[] args)
         {
             for (int i = 0; i < projects.Length; i++)
             {
-                GitLib.ExcuteCommand(projects[i], new[] { "add ." });
+                GitLib.ExcuteCommand(projects[i], "add .", retry);
             }
         }
     }

@@ -36,9 +36,15 @@ namespace GitKit
                 {
                     var words = SplitCommand(typein.Trim());
                     var cmdname = words[0];
+
+                    if (GetRetry(words.Last(), out var retry))
+                    {
+                        words = words[0..(words.Length - 1)];
+                    }
+
                     if (allcmds.TryGetValue(cmdname.ToLower(), out var command))
                     {
-                        command.Excute(projects, words[1..]);
+                        command.Excute(projects, retry, words[1..]);
                     }
                     else continue;
                 }
@@ -46,6 +52,19 @@ namespace GitKit
             }
         }
 
+        private static Regex retryexp = new Regex(@"retry\:\d+", RegexOptions.Compiled);
+        private static Regex uintnexp = new Regex(@"\d+", RegexOptions.Compiled);
+        private static bool GetRetry(string str, out uint retry)
+        {
+            retry = uint.MaxValue;
+            if (retryexp.IsMatch(str))
+            {
+                var nstr = uintnexp.Match(str).Value;
+                retry = uint.Parse(nstr);
+                return true;
+            }
+            return false;
+        }
         /// <summary>
         /// 命令分割正则表达式，空格分割，""中的空格不分割
         /// </summary>
@@ -83,7 +102,7 @@ namespace GitKit
         {
             Console.Write("\x1B[1A\x1B[2K\r");
             //强制刷新缓冲区
-            Console.Out.Flush(); 
+            Console.Out.Flush();
         }
 
         private static string SetAndGetWorkingFolder(string folder = null)

@@ -18,8 +18,14 @@ namespace GitKit.Commands
         {
         }
 
-        public override void Excute(string[] projects, params string[] args)
+        public override void Excute(string[] projects, uint retry, params string[] args)
         {
+            //Add
+            for (int i = 0; i < projects.Length; i++)
+            {
+                GitLib.ExcuteCommand(projects[i], "add .", retry);
+            }
+            //commit
             var option = args.Where(a => a.StartsWith("\"") && a.EndsWith("\"")).FirstOrDefault();
             if (string.IsNullOrWhiteSpace(option))
             {
@@ -29,16 +35,14 @@ namespace GitKit.Commands
             {
                 args = args.Where(a => a != option).ToArray();
             }
-
-            var addcmd = "add .";
-            var commitcmd = $"commit -m {option}";
-            var pushcmd = $"push {string.Join(" ", args)}";
-
-            string[] commands = new[] { addcmd, commitcmd, pushcmd };
-
             for (int i = 0; i < projects.Length; i++)
             {
-                GitLib.ExcuteCommand(projects[i], commands);
+                GitLib.ExcuteCommand(projects[i], $"commit -m {option}", retry);
+            }
+            //push
+            for (int i = 0; i < projects.Length; i++)
+            {
+                GitLib.ExcuteCommand(projects[i], $"push {string.Join(" ", args)}", retry);
             }
         }
     }
