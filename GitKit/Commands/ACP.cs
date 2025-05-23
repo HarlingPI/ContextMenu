@@ -20,12 +20,6 @@ namespace GitKit.Commands
 
         public override void Excute(string[] projects, uint retry, params string[] args)
         {
-            //Add
-            for (int i = 0; i < projects.Length; i++)
-            {
-                GitLib.ExcuteCommand(projects[i], "add .", retry);
-            }
-            //commit
             var option = args.Where(a => a.StartsWith("\"") && a.EndsWith("\"")).FirstOrDefault();
             if (string.IsNullOrWhiteSpace(option))
             {
@@ -35,13 +29,14 @@ namespace GitKit.Commands
             {
                 args = args.Where(a => a != option).ToArray();
             }
+
             for (int i = 0; i < projects.Length; i++)
             {
+                //Add
+                GitLib.ExcuteCommand(projects[i], "add .", retry);
+                //commit
                 GitLib.ExcuteCommand(projects[i], $"commit -m {option}", retry);
-            }
-            //push
-            for (int i = 0; i < projects.Length; i++)
-            {
+                //push
                 GitLib.ExcuteCommand(projects[i], $"push {string.Join(" ", args)}", retry);
             }
         }
