@@ -34,7 +34,8 @@ namespace GitKit
 
                 if (!string.IsNullOrEmpty(typein))
                 {
-                    uint retry = GetRetry(ref typein);
+                    var retry = GetRetry(ref typein);
+                    var post = GetPost(ref typein);
 
                     var words = SplitCommand(typein.Trim());
                     var cmdname = words[0];
@@ -51,23 +52,42 @@ namespace GitKit
                             GitLib.ExcuteCommand(projects[i], typein, retry);
                         }
                     }
-
-
-
+                    //执行附加命令
+                    switch (post)
+                    {
+                        case 'e':
+                            Environment.Exit(0);
+                            break;
+                        default:
+                            break;
+                    }
                 }
                 else Environment.Exit(0);
             }
+        }
+
+        private static Regex finexp = new Regex(@"fin\:\w", RegexOptions.Compiled);
+        private static char GetPost(ref string str)
+        {
+            var match = finexp.Match(str);
+            if (match.Success)
+            {
+                str = finexp.Replace(str, "");
+                return match.Value[^1];
+            }
+            else return ' ';
         }
 
         private static Regex retryexp = new Regex(@"re\:\d+", RegexOptions.Compiled);
         private static Regex uintnexp = new Regex(@"\d+", RegexOptions.Compiled);
         private static uint GetRetry(ref string str)
         {
-            if (retryexp.IsMatch(str))
+            var match = retryexp.Match(str);
+            if (match.Success)
             {
-                var nstr = uintnexp.Match(str).Value;
                 str = retryexp.Replace(str, "");
-                return uint.Parse(nstr);
+                match = uintnexp.Match(match.Value);
+                return uint.Parse(match.Value);
             }
             else return uint.MaxValue;
         }
