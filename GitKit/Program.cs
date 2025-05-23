@@ -46,7 +46,14 @@ namespace GitKit
                     {
                         command.Excute(projects, retry, words[1..]);
                     }
-                    else continue;
+                    else
+                    {
+                        //默认命令执行
+                        for (int i = 0; i < projects.Length; i++)
+                        {
+                            GitLib.ExcuteCommand(projects[i], typein, retry);
+                        }
+                    }
                 }
                 else Environment.Exit(0);
             }
