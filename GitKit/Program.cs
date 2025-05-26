@@ -15,6 +15,7 @@ namespace GitKit
         private static string[] projects;
         static void Main(string[] args)
         {
+            Console.BufferHeight = 30000;
             //注册非Unicode编码
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             AnsiUtils.EnableAnsiEscapeCodes();
@@ -118,10 +119,13 @@ namespace GitKit
             projects = GitLib.FindProjects(working);
             //清除上一行
             ClearLastLine();
+            //计算最长的路径长度
+            var dirl = projects.Length > 0 ? projects.Select(p => p.Length).Max() : 0;
             //输出所有找到的Git项目
             for (int i = 0; i < projects.Length; i++)
             {
-                Console.WriteLine(projects[i]);
+                var outstr = projects[i].PadRight(dirl, ' ');
+                Console.WriteLine($"{outstr}\t[{i}]");
             }
         }
         private static void ClearLastLine()
