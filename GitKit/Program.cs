@@ -35,27 +35,29 @@ namespace GitKit
 
                 if (!string.IsNullOrEmpty(typein))
                 {
-                    var retry = GetRetry(ref typein);
-                    var post = GetPost(ref typein);
+                    var filtered = GetFilteredProjects(ref typein);
+                    var retry = GetRetryCount(ref typein);
+                    var post = GetPostCommand(ref typein);
 
                     var words = SplitCommand(typein.Trim());
                     var cmdname = words[0];
 
                     if (allcmds.TryGetValue(cmdname.ToLower(), out var command))
                     {
-                        command.Excute(projects, retry, words[1..]);
+                        command.Excute(filtered, retry, words[1..]);
                     }
                     else
                     {
                         //默认命令执行
-                        for (int i = 0; i < projects.Length; i++)
+                        for (int i = 0; i < filtered.Length; i++)
                         {
-                            GitLib.ExcuteCommand(projects[i], typein, retry);
+                            GitLib.ExcuteCommand(filtered[i], typein, retry);
                         }
                     }
                     //执行附加命令
                     switch (post)
                     {
+                        case 'E':
                         case 'e':
                             Environment.Exit(0);
                             break;
@@ -66,9 +68,24 @@ namespace GitKit
                 else Environment.Exit(0);
             }
         }
+        private static Regex fexp = new Regex(@"f\:\d+(,\d+)*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static string[] GetFilteredProjects(ref string str)
+        {
+            var match = fexp.Match(str);
+            if (match.Success)
+            {
+                str = fexp.Replace(str, "");
+                return uintnexp.Matches(match.Value)
+                    .Select(m => int.Parse(m.Value))
+                    .Where(i => i >= 0 && i < projects.Length)
+                    .Select(i => projects[i])
+                    .ToArray();
+            }
+            return projects;
+        }
 
-        private static Regex finexp = new Regex(@"fin\:\w", RegexOptions.Compiled);
-        private static char GetPost(ref string str)
+        private static Regex finexp = new Regex(@"fin\:\w", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static char GetPostCommand(ref string str)
         {
             var match = finexp.Match(str);
             if (match.Success)
@@ -79,9 +96,9 @@ namespace GitKit
             else return ' ';
         }
 
-        private static Regex retryexp = new Regex(@"re\:\d+", RegexOptions.Compiled);
+        private static Regex retryexp = new Regex(@"re\:\d+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex uintnexp = new Regex(@"\d+", RegexOptions.Compiled);
-        private static uint GetRetry(ref string str)
+        private static uint GetRetryCount(ref string str)
         {
             var match = retryexp.Match(str);
             if (match.Success)
