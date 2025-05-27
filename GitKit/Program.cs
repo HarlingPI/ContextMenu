@@ -68,18 +68,42 @@ namespace GitKit
                 else Environment.Exit(0);
             }
         }
-        private static Regex fexp = new Regex(@"f\:\d+(,\d+)*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex fexp = new Regex(@"f:(?:\d+|\[\d+~\d+\])(?:,(?:\d+|\[\d+~\d+\]))*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static string[] GetFilteredProjects(ref string str)
         {
             var match = fexp.Match(str);
             if (match.Success)
             {
                 str = fexp.Replace(str, "");
-                return uintnexp.Matches(match.Value)
-                    .Select(m => int.Parse(m.Value))
-                    .Where(i => i >= 0 && i < projects.Length)
-                    .Select(i => projects[i])
-                    .ToArray();
+                var parts = match.Value[2..].Split(',');
+                var temp = new List<string>();
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    var item = parts[i];
+                    if (item.StartsWith("[") && item.EndsWith("]"))
+                    {
+                        //范围选择
+                        var range = item[1..^1].Split('~');
+                        if (range.Length == 2 && int.TryParse(range[0], out int start) && int.TryParse(range[1], out int end))
+                        {
+                            for (int j = start; j <= end && j < projects.Length; j++)
+                            {
+                                temp.Add(projects[j]);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //单个选择
+                        var num = int.Parse(item);
+                        if (num >= 0 && num < projects.Length)
+                        {
+                            temp.Add(projects[num]);
+                        }
+                    }
+                }
+
+                return temp.ToArray();
             }
             return projects;
         }
