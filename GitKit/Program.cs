@@ -35,27 +35,23 @@ namespace GitKit
 
                 if (!string.IsNullOrEmpty(typein))
                 {
-                    var filtered = GetFilteredProjects(ref typein);
-                    var retry = GetRetryCount(ref typein);
-                    var post = GetPostCommand(ref typein);
+                    var analyzer = new Analyzer(typein, projects);
 
-                    var words = SplitCommand(typein.Trim());
-                    var cmdname = words[0];
-
+                    var cmdname = analyzer.Words[0];
                     if (allcmds.TryGetValue(cmdname.ToLower(), out var command))
                     {
-                        command.Excute(filtered, retry, words[1..]);
+                        command.Excute(analyzer.FilteredProjects, analyzer.Retry, analyzer.Words[1..]);
                     }
                     else
                     {
                         //默认命令执行
-                        for (int i = 0; i < filtered.Length; i++)
+                        for (int i = 0; i < analyzer.FilteredProjects.Length; i++)
                         {
-                            GitLib.ExcuteCommand(filtered[i], typein, retry);
+                            GitLib.ExcuteCommand(analyzer.FilteredProjects[i], typein, analyzer.Retry);
                         }
                     }
                     //执行附加命令
-                    switch (post)
+                    switch (analyzer.PostCmd)
                     {
                         case 'E':
                         case 'e':
@@ -67,83 +63,6 @@ namespace GitKit
                 }
                 else Environment.Exit(0);
             }
-        }
-        private static Regex fexp = new Regex(@"f:(?:\d+|\[\d+~\d+\])(?:,(?:\d+|\[\d+~\d+\]))*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static string[] GetFilteredProjects(ref string str)
-        {
-            var match = fexp.Match(str);
-            if (match.Success)
-            {
-                str = fexp.Replace(str, "");
-                var parts = match.Value[2..].Split(',');
-                var temp = new List<string>();
-                for (int i = 0; i < parts.Length; i++)
-                {
-                    var item = parts[i];
-                    if (item.StartsWith("[") && item.EndsWith("]"))
-                    {
-                        //范围选择
-                        var range = item[1..^1].Split('~');
-                        if (range.Length == 2 && int.TryParse(range[0], out int start) && int.TryParse(range[1], out int end))
-                        {
-                            for (int j = start; j <= end && j < projects.Length; j++)
-                            {
-                                temp.Add(projects[j]);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        //单个选择
-                        var num = int.Parse(item);
-                        if (num >= 0 && num < projects.Length)
-                        {
-                            temp.Add(projects[num]);
-                        }
-                    }
-                }
-
-                return temp.ToArray();
-            }
-            return projects;
-        }
-
-        private static Regex finexp = new Regex(@"fin\:\w", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static char GetPostCommand(ref string str)
-        {
-            var match = finexp.Match(str);
-            if (match.Success)
-            {
-                str = finexp.Replace(str, "");
-                return match.Value[^1];
-            }
-            else return ' ';
-        }
-
-        private static Regex retryexp = new Regex(@"re\:\d+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static Regex uintnexp = new Regex(@"\d+", RegexOptions.Compiled);
-        private static uint GetRetryCount(ref string str)
-        {
-            var match = retryexp.Match(str);
-            if (match.Success)
-            {
-                str = retryexp.Replace(str, "");
-                match = uintnexp.Match(match.Value);
-                return uint.Parse(match.Value);
-            }
-            else return uint.MaxValue;
-        }
-        /// <summary>
-        /// 命令分割正则表达式，空格分割，""中的空格不分割
-        /// </summary>
-        private static Regex splitexp = new Regex(@"(\""[^\""]*\"")|(\S+)", RegexOptions.Compiled);
-        private static string[] SplitCommand(string command)
-        {
-            return splitexp
-                .Split(command)
-                .Select(w => w.Trim())
-                .Where(w => !string.IsNullOrEmpty(w))
-                .ToArray();
         }
         /// <summary>
         /// 初始化程序工作目录与查找项目
