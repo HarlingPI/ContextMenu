@@ -1,4 +1,6 @@
-﻿namespace GitTest
+﻿using GitKit;
+
+namespace GitTest
 {
     internal class Program
     {
@@ -19,7 +21,10 @@
 
             for (int i = 0; i < modules.Count; i++)
             {
-                GitLib.ExcuteCommand(modules[i], commands);
+                for (int j = 0; j < commands.Length; j++)
+                {
+                    GitLib.ExcuteCommand(modules[i], commands[j]);
+                }
             }
 
             Console.ForegroundColor = ConsoleColor.White;

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -19,8 +20,20 @@ namespace GitKit
             //注册非Unicode编码
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             AnsiUtils.EnableAnsiEscapeCodes();
+            if (IsAdministrator()) AdmMod();
+            else NormalMod(args);
+        }
 
-            InitProgram();
+        private static void AdmMod()
+        {
+            // 已有管理员权限，显示操作菜单
+            Console.WriteLine("已获取管理员权限");
+            ContextMenu.EditContextMenu();
+        }
+
+        private static void NormalMod(string[] args)
+        {
+            InitProgram(args.Length > 0 ? args[0] : null);
             while (true)
             {
                 //输出工作路径
@@ -63,6 +76,13 @@ namespace GitKit
                 }
                 else Environment.Exit(0);
             }
+        }
+
+        private static bool IsAdministrator()
+        {
+            WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            WindowsPrincipal principal = new WindowsPrincipal(identity);
+            return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
         /// <summary>
         /// 初始化程序工作目录与查找项目
