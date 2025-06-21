@@ -19,7 +19,7 @@ namespace GitKit
         // 右键菜单项名称
         private const string MenuItemName = "打开Gitkit";
         // 注册表项名称
-        private const string RegistryKeyName = "ShowDirPath";
+        private const string RegistryKeyName = "OpenGitkit";
         private const string DirectoryKey = $"Directory\\shell\\{RegistryKeyName}";
         private const string BackgroundKey = $"Directory\\Background\\shell\\{RegistryKeyName}";
 
