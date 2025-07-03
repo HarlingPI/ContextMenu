@@ -17,11 +17,19 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class OD : Command
     {
+        public override string Description => "调用资源管理器打开指定路径";
+
+        public override string Formate => "od p|f";
+
+        public override string[] Parametes => new[]
+        {
+            "p:目标文件夹",
+            "f:已列出的目录索引",
+        };
         private static Regex idxexp = new Regex(@"^\d+$", RegexOptions.Compiled);
         public OD(string workingFolder) : base(workingFolder)
         {
         }
-
         public override void Excute(string[] projects, uint retry, params string[] args)
         {
             var folder = "";

@@ -14,10 +14,14 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class Reset : Command
     {
+        public override string Description => "Git中的reset命令,默认参数为--hard HEAD";
+
+        public override string Formate => "";
+
+        public override string[] Parametes => null;
         public Reset(string workingFolder) : base(workingFolder)
         {
         }
-
         public override void Excute(string[] projects, uint retry, params string[] args)
         {
             var cmd = "";

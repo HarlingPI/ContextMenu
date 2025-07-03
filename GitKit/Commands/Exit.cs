@@ -14,6 +14,11 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class Exit : Command
     {
+        public override string Description => "退出应用程序";
+
+        public override string Formate => "exit";
+
+        public override string[] Parametes => null;
         public Exit(string workingFolder) : base(workingFolder)
         {
         }

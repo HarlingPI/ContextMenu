@@ -14,6 +14,17 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class Url : Command
     {
+        public override string Description => "关联的远端连接编辑查看命令";
+
+        public override string Formate => "url [ad|rm] u";
+
+        public override string[] Parametes => new[]
+        {
+            "  :列出所有远端连接",
+            "ad:添加远端连接",
+            "rm:删除远端连接",
+            "u :远端连接地址"
+        };
         public Url(string workingFolder) : base(workingFolder)
         {
         }

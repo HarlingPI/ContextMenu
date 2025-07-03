@@ -15,6 +15,13 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class CD : Command
     {
+        public override string Description => "切换程序的工作目录";
+        public override string Formate => "cd p|f";
+        public override string[] Parametes => new[]
+        {
+            "p:目标文件夹",
+            "f:已列出的目录索引",
+        };
         private static Regex idxexp = new Regex(@"^\d+$", RegexOptions.Compiled);
         public CD(string workingFolder) : base(workingFolder)
         {

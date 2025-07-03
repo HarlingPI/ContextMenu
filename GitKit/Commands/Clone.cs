@@ -14,6 +14,13 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class Clone : Command
     {
+        public override string Description => "Git中的克隆命令,默认携带recursive参数";
+        public override string Formate => "clone u p";
+        public override string[] Parametes => new[]
+        {
+            "u:远程仓库地址",
+            "p:克隆到的本地路径"
+        };
         public Clone(string workingFolder) : base(workingFolder)
         {
         }

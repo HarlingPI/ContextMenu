@@ -15,9 +15,21 @@ namespace GitKit
     public abstract class Command
     {
         /// <summary>
+        /// 命令说明
+        /// </summary>
+        public abstract string Description { get; }
+        /// <summary>
+        /// 命令格式
+        /// </summary>
+        public abstract string Formate { get; }
+        /// <summary>
+        /// 命令参数说明
+        /// </summary>
+        public abstract string[] Parametes { get; }
+        /// <summary>
         /// 工作路径
         /// </summary>
-        protected string WorkingFolder { get;private set; }
+        protected string WorkingFolder { get; private set; }
         protected Command(string workingFolder)
         {
             WorkingFolder = workingFolder;
@@ -28,6 +40,6 @@ namespace GitKit
         /// <param name="projects"></param>
         /// <param name="retry"></param>
         /// <param name="args"></param>
-        public abstract void Excute(string[] projects,uint retry, params string[] args);
+        public abstract void Excute(string[] projects, uint retry, params string[] args);
     }
 }

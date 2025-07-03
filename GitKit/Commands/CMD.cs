@@ -15,6 +15,15 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class CMD : Command
     {
+        public override string Description => "调用系统的cmd";
+
+        public override string Formate => "cmd c";
+
+        public override string[] Parametes => new[] 
+        {
+            "c:原始cmd命令"
+        };
+
         public CMD(string workingFolder) : base(workingFolder)
         {
         }
@@ -72,7 +81,7 @@ namespace GitKit.Commands
         private string ExecuteAdmin(string command)
         {
             //生成临时文件路径
-            string tempFile = Path.GetTempFileName(); 
+            string tempFile = Path.GetTempFileName();
             try
             {
                 var processInfo = new ProcessStartInfo
@@ -80,14 +89,14 @@ namespace GitKit.Commands
                     WorkingDirectory = WorkingFolder,
                     FileName = "cmd.exe",
                     //输出重定向到临时文件
-                    Arguments = $"/c cd /d \"{WorkingFolder}\" && {command} > \"{tempFile}\" 2>&1", 
+                    Arguments = $"/c cd /d \"{WorkingFolder}\" && {command} > \"{tempFile}\" 2>&1",
                     Verb = "runas",
                     UseShellExecute = true
                 };
 
                 var process = Process.Start(processInfo);
                 //等待命令执行完成
-                process.WaitForExit(); 
+                process.WaitForExit();
                 //读取临时文件信息
                 return File.ReadAllText(tempFile, Encoding.GetEncoding("GBK"));
             }
@@ -98,10 +107,10 @@ namespace GitKit.Commands
             finally
             {
                 //清理临时文件
-                File.Delete(tempFile); 
+                File.Delete(tempFile);
             }
         }
 
-        
+
     }
 }

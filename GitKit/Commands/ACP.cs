@@ -14,10 +14,18 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class ACP : Command
     {
+        public override string Description => "git中'add.'、'commit'、'push'命令的结合命令";
+
+        public override string Formate => "acp[ACP] m f";
+
+        public override string[] Parametes => new[] 
+        {
+            "m:commit的信息,默认为'Commit by scripts'",
+            "f:用于指定acp命令要应用于哪些项目    \tf:[s:e]|f:a,b,c...|f:[s:e],a,b,c..."
+        };
         public ACP(string workingFolder) : base(workingFolder)
         {
         }
-
         public override void Excute(string[] projects, uint retry, params string[] args)
         {
             var option = args.Where(a => a.StartsWith("\"") && a.EndsWith("\"")).FirstOrDefault();

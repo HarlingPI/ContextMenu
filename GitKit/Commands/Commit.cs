@@ -14,10 +14,17 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class Commit : Command
     {
+        public override string Description => "Git中commit命令的简略版";
+
+        public override string Formate => "commit m";
+
+        public override string[] Parametes => new[]
+        {
+            "m:本次提交的日志记录"
+        };
         public Commit(string workingFolder) : base(workingFolder)
         {
         }
-
         public override void Excute(string[] projects, uint retry, params string[] args)
         {
             var option = args.Where(a => a.StartsWith("\"") && a.EndsWith("\"")).FirstOrDefault();

@@ -14,6 +14,11 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class Help : Command
     {
+        public override string Description => "列出程序支持的所有命令";
+
+        public override string Formate => "help";
+
+        public override string[] Parametes => null;
         public Help(string workingFolder) : base(workingFolder)
         {
         }
@@ -22,11 +27,21 @@ namespace GitKit.Commands
         {
             var orgcolor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("All Commands:");
-            var names = Program.GetCommandsNames();
-            for (int i = 0; i < names.Length; i++)
+            var cmds = Program.GetCommands();
+            for (int i = 0; i < cmds.Length; i++)
             {
-                Console.WriteLine($"\t{names[i]}");
+                var cmd = cmds[i];
+                Console.WriteLine($"{cmd.GetType().Name.ToLower()}\t{cmd.Description}");
+                Console.WriteLine($"{cmd.Formate}");
+                var paramsinfo = cmd.Parametes;
+                if(paramsinfo != null && paramsinfo.Length > 0)
+                {
+                    for (int j = 0; j < paramsinfo.Length; j++)
+                    {
+                        Console.WriteLine($"\t{paramsinfo[j]}");
+                    }
+                }
+                Console.WriteLine();
             }
             Console.ForegroundColor = orgcolor;
         }

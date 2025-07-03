@@ -160,9 +160,12 @@ namespace GitKit
         /// 获取所有指令名称
         /// </summary>
         /// <returns></returns>
-        public static string[] GetCommandsNames()
+        public static Command[] GetCommands()
         {
-            return allcmds.Keys.OrderBy(x => x).ToArray();
+            return allcmds
+                .OrderBy(kvp => kvp.Key)
+                .Select(kvp => kvp.Value)
+                .ToArray();
         }
     }
 }

@@ -14,10 +14,17 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class Switch : Command
     {
+        public override string Description => "切换分支命令";
+
+        public override string Formate => "switch b";
+
+        public override string[] Parametes => new[] 
+        {
+            "b:目标分支名称"
+        };
         public Switch(string workingFolder) : base(workingFolder)
         {
         }
-
         public override void Excute(string[] projects, uint retry, params string[] args)
         {
             var cmd = $"switch {string.Join(' ', args)}";
