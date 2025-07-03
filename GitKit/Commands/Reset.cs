@@ -25,7 +25,7 @@ namespace GitKit.Commands
         public override void Excute(string[] projects, uint retry, params string[] args)
         {
             var cmd = "";
-            if (args == null || args.Length == 0)
+            if (args.IsNullOrEmpty())
             {
                 cmd = $"reset --hard HEAD";
             }

@@ -16,7 +16,7 @@ namespace GitKit.Commands
     {
         public override string Description => "git中'add.'、'commit'、'push'命令的结合命令";
 
-        public override string Formate => "acp[ACP] m f";
+        public override string Formate => "acp m f";
 
         public override string[] Parametes => new[] 
         {

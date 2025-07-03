@@ -16,11 +16,12 @@ namespace GitKit.Commands
     {
         public override string Description => "Git中commit命令的简略版";
 
-        public override string Formate => "commit m";
+        public override string Formate => "commit m f";
 
         public override string[] Parametes => new[]
         {
-            "m:本次提交的日志记录"
+            "m:本次提交的日志记录",
+            "f:用于指定commit命令要应用于哪些项目    \tf:[s:e]|f:a,b,c...|f:[s:e],a,b,c..."
         };
         public Commit(string workingFolder) : base(workingFolder)
         {
