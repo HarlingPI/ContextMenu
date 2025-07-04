@@ -45,7 +45,7 @@ namespace GitKit.Commands
                 var add = "";
                 if (WorkingFolder.Contains(project))
                 {
-                    add = $"add {WorkingFolder.Replace(project, ".")}";
+                    add = $"add \"{WorkingFolder.Replace(project, ".")}\"";
                 }
                 else add = $"add .";
                 //Add
