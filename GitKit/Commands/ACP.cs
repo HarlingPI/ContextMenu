@@ -51,7 +51,10 @@ namespace GitKit.Commands
                 //Add
                 GitLib.ExcuteCommand(project, add, retry);
                 //commit
-                GitLib.ExcuteCommand(project, $"commit -m {option}", retry);
+                if (GitLib.ExcuteCommand(project, $"commit -m {option}", retry).Contains("nothing to commit"))
+                {
+                    continue;
+                }
                 //push
                 GitLib.ExcuteCommand(project, $"push {string.Join(" ", args)}", retry);
             }
