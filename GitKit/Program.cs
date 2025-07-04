@@ -138,7 +138,7 @@ namespace GitKit
         /// </summary>
         /// <param name="folder"></param>
         /// <returns></returns>
-        private static string InitCommands(string folder)
+        private static void InitCommands(string folder)
         {
             var cmdtype = typeof(Command);
             var types = cmdtype
@@ -154,7 +154,6 @@ namespace GitKit
                 var command = (Command)Activator.CreateInstance(type, folder);
                 allcmds[type.Name.ToLower()] = command;
             }
-            return working;
         }
         /// <summary>
         /// 获取所有指令名称

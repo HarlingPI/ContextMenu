@@ -14,11 +14,11 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class ACP : Command
     {
-        public override string Description => "git中'add.'、'commit'、'push'命令的结合命令";
+        public override string Description => "git中'add'、'commit'、'push'命令的结合命令";
 
         public override string Formate => "acp m f r";
 
-        public override string[] Parametes => new[] 
+        public override string[] Parametes => new[]
         {
             "m:commit的信息,默认为'Commit by scripts'",
             "f:用于指定acp命令要应用于哪些项目    \tf:[s:e]|f:a,b,c...|f:[s:e],a,b,c...",
@@ -41,12 +41,19 @@ namespace GitKit.Commands
 
             for (int i = 0; i < projects.Length; i++)
             {
+                var project = projects[i];
+                var add = "";
+                if (WorkingFolder.Contains(project))
+                {
+                    add = $"add {WorkingFolder.Replace(project, ".")}";
+                }
+                else add = $"add .";
                 //Add
-                GitLib.ExcuteCommand(projects[i], "add .", retry);
+                GitLib.ExcuteCommand(project, add, retry);
                 //commit
-                GitLib.ExcuteCommand(projects[i], $"commit -m {option}", retry);
+                GitLib.ExcuteCommand(project, $"commit -m {option}", retry);
                 //push
-                GitLib.ExcuteCommand(projects[i], $"push {string.Join(" ", args)}", retry);
+                GitLib.ExcuteCommand(project, $"push {string.Join(" ", args)}", retry);
             }
         }
     }

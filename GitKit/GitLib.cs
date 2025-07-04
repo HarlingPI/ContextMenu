@@ -96,23 +96,23 @@ namespace GitKit
         /// <summary>
         /// 执行指令
         /// </summary>
-        /// <param name="directory"></param>
+        /// <param name="project"></param>
         /// <param name="command"></param>
         /// <param name="retry"></param>
         /// <param name="setworkdir"></param>
         /// <returns></returns>
-        public static string ExcuteCommand(string directory, string command, uint retry = uint.MaxValue, bool setworkdir = true)
+        public static string ExcuteCommand(string project, string command, uint retry = uint.MaxValue, bool setworkdir = true)
         {
             command = command.Trim();
             var orgcolor = Console.ForegroundColor;
 
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine($"\"{command}\":{directory}");
+            Console.WriteLine($"\"{command}\":{project}");
             var output = "";
 
             for (int i = 0; i < retry; i++)
             {
-                output = ExcuteGitCommand(directory, command, setworkdir);
+                output = ExcuteGitCommand(project, command, setworkdir);
 
                 if (/*exitcode != 0 || */errorexp.IsMatch(output))
                 {
