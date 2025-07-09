@@ -14,7 +14,7 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class ACP : Command
     {
-        public override string Description => "git中'add'、'commit'、'push'命令的结合命令,根据项目状态自行决定要执行的命令";
+        public override string Description => "git中'add'、'commit'、'push'命令的结合命令";
 
         public override string Formate => "acp m f r";
 
@@ -42,26 +42,18 @@ namespace GitKit.Commands
             for (int i = 0; i < projects.Length; i++)
             {
                 var project = projects[i];
-                //先查看本地信息
-                var status = GitLib.ExcuteCommand(project, "status", retry);
-                var needadd = status.Contains("Untracked files:");
-                var needcommit = status.Contains("Changes not staged for commit:");
-                if (needadd || needcommit)
+                var add = "";
+                if (WorkingFolder.Contains(project))
                 {
-                    var add = "";
-                    if (WorkingFolder.Contains(project))
-                    {
-                        add = $"add {WorkingFolder.Replace(project, ".")}";
-                    }
-                    else add = $"add .";
-                    //Add
-                    GitLib.ExcuteCommand(project, add, retry);
-                    //commit
-                    GitLib.ExcuteCommand(project, $"commit -m {option}", retry);
-                    //push
-                    GitLib.ExcuteCommand(project, $"push {string.Join(" ", args)}", retry);
+                    add = $"add {WorkingFolder.Replace(project, ".")}";
                 }
-
+                else add = $"add .";
+                //Add
+                GitLib.ExcuteCommand(project, add, retry);
+                //commit
+                GitLib.ExcuteCommand(project, $"commit -m {option}", retry);
+                //push
+                GitLib.ExcuteCommand(project, $"push {string.Join(" ", args)}", retry);
             }
         }
     }
