@@ -33,7 +33,7 @@ namespace GitKit.Commands
             var cmd = "";
             if (args.IsNullOrEmpty())
             {
-                cmd = "ls-files -v | grep ^S";
+                cmd = "ls-files -v | findstr /B \"S \"";
             }
             else
             {

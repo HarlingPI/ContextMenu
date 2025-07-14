@@ -32,7 +32,7 @@ namespace GitKit
             if (projects.IsNullOrEmpty())
             {
                 var root = ExcuteGitCommand(folder, "rev-parse --show-toplevel", false);
-                projects.Add(root.Trim().Replace('/','\\'));
+                projects.Add(root.Trim().Replace('/', '\\'));
             }
             return projects.ToArray();
         }
@@ -140,8 +140,8 @@ namespace GitKit
             string? output;
             var startinfo = new ProcessStartInfo()
             {
-                FileName = "git",
-                Arguments = command,
+                FileName = "cmd.exe",
+                Arguments = $"/c git {command}",
                 // 重定向标准输出
                 RedirectStandardOutput = true,
                 // 重定向标准错误
