@@ -21,7 +21,7 @@ namespace GitKit.Commands
         public override string[] Parametes => new[]
         {
             "m:commit的信息,默认为'Commit by scripts'",
-            "f:用于指定acp命令要应用于哪些项目    \tf:[s:e]|f:a,b,c...|f:[s:e],a,b,c...",
+            "f:用于指定acp命令要应用于哪些项目    \tf:[s~e]|f:a,b,c...|f:[s~e],a,b,c...",
             "r:用于指定本命令最大重试次数    \tre:n",
         };
         public ACP(string workingFolder) : base(workingFolder)

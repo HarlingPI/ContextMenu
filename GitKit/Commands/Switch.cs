@@ -21,7 +21,7 @@ namespace GitKit.Commands
         public override string[] Parametes => new[] 
         {
             "b:目标分支名称",
-            "f:用于指定switch命令要应用于哪些项目    \tf:[s:e]|f:a,b,c...|f:[s:e],a,b,c..."
+            "f:用于指定switch命令要应用于哪些项目    \tf:[s:e]|f:a,b,c...|f:[s~e],a,b,c..."
         };
         public Switch(string workingFolder) : base(workingFolder)
         {

@@ -22,7 +22,7 @@ namespace GitKit.Commands
         public override string[] Parametes => new[]
         {
             "p:要添加的目录，可选，为空时优先提交当前目录下的更改，次级提交项目下的所有改动",
-            "f:用于指定acp命令要应用于哪些项目    \tf:[s:e]|f:a,b,c...|f:[s:e],a,b,c...",
+            "f:用于指定acp命令要应用于哪些项目    \tf:[s:e]|f:a,b,c...|f:[s~e],a,b,c...",
             "r:用于指定本命令最大重试次数    \tre:n",
         };
         public Add(string workingFolder) : base(workingFolder)

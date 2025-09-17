@@ -21,7 +21,7 @@ namespace GitKit.Commands
         public override string[] Parametes => new[]
         {
             "m:本次提交的日志记录",
-            "f:用于指定commit命令要应用于哪些项目    \tf:[s:e]|f:a,b,c...|f:[s:e],a,b,c..."
+            "f:用于指定commit命令要应用于哪些项目    \tf:[s:e]|f:a,b,c...|f:[s~e],a,b,c..."
         };
         public Commit(string workingFolder) : base(workingFolder)
         {
