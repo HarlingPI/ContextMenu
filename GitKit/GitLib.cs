@@ -141,7 +141,7 @@ namespace GitKit
             var startinfo = new ProcessStartInfo()
             {
                 FileName = "cmd.exe",
-                Arguments = $"/c git {command}",
+                Arguments = $"/c chcp 65001 >nul && git {command}",
                 // 重定向标准输出
                 RedirectStandardOutput = true,
                 // 重定向标准错误
@@ -149,7 +149,10 @@ namespace GitKit
                 // 不使用系统shell
                 UseShellExecute = false,
                 // 不创建窗口
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                //设置输入输出编码为UTF8，防止乱码
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
             };
             if (setworkdir)
             {
