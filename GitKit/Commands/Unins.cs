@@ -18,7 +18,7 @@ namespace GitKit.Commands
     {
         public override string Description => "卸载软件";
 
-        public override string Formate => "uins";
+        public override string Formate => "unins";
 
         public override string[] Parametes => null;
         public Unins(string workingFolder) : base(workingFolder)
