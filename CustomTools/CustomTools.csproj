@@ -8,14 +8,9 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<Content Include="Resources\Main.ico" />
-		<Content Include="Resources\Rename.ico">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Include="Resources\Delete.ico">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Include="Resources\Config.ico">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
+		<Content Include="Resources\Rename.ico"/>
+		<Content Include="Resources\Delete.ico"/>
+		<Content Include="Resources\Config.ico"/>
+		<Content Include="Resources\Unins.ico"/>
 	</ItemGroup>
 </Project>
