@@ -1,4 +1,4 @@
-﻿
+﻿using GitKit.Commands;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -20,18 +20,13 @@ namespace GitKit
             //注册非Unicode编码
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             AnsiUtils.EnableAnsiEscapeCodes();
-            if (IsAdministrator()) AdmMod();
-            else NormalMod(args);
+            //检查和注册
+            Unins.RegisterContextMenu();
+            //执行
+            ExcuteArgs(args);
         }
 
-        private static void AdmMod()
-        {
-            // 已有管理员权限，显示操作菜单
-            Console.WriteLine("已获取管理员权限");
-            ContextMenu.EditContextMenu();
-        }
-
-        private static void NormalMod(string[] args)
+        private static void ExcuteArgs(string[] args)
         {
             InitProgram(args.Length > 0 ? args[0] : null);
             while (true)
@@ -78,12 +73,6 @@ namespace GitKit
             }
         }
 
-        private static bool IsAdministrator()
-        {
-            WindowsIdentity identity = WindowsIdentity.GetCurrent();
-            WindowsPrincipal principal = new WindowsPrincipal(identity);
-            return principal.IsInRole(WindowsBuiltInRole.Administrator);
-        }
         /// <summary>
         /// 初始化程序工作目录与查找项目
         /// </summary>
