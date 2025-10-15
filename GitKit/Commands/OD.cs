@@ -53,7 +53,12 @@ namespace GitKit.Commands
                 folder = folder.Replace("\"", "");
             }
 
-            if (Directory.Exists(folder)||File.Exists(folder))
+            if (string.IsNullOrEmpty(folder))
+            {
+                folder = WorkingFolder;
+            }
+
+            if (Directory.Exists(folder) || File.Exists(folder))
             {
                 try
                 {
