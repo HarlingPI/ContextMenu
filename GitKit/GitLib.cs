@@ -32,7 +32,10 @@ namespace GitKit
             if (projects.IsNullOrEmpty())
             {
                 var root = ExcuteGitCommand(folder, "rev-parse --show-toplevel", false);
-                projects.Add(root.Trim().Replace('/', '\\'));
+                if(!root.StartsWith("fatal: not a git repository"))
+                {
+                    projects.Add(root.Trim().Replace('/', '\\'));
+                }
             }
             return projects.ToArray();
         }
