@@ -93,8 +93,16 @@ namespace GitKit
             //输出所有找到的Git项目
             for (int i = 0; i < projects.Length; i++)
             {
-                var outstr = projects[i].PadRight(dirl, ' ');
-                Console.WriteLine($"{outstr}\t[{i}]");
+                var project = projects[i];
+                //读取分支名
+                var content = File.ReadAllText(project + "/.git/HEAD");
+                var branch = content[(content.LastIndexOf('/') + 1)..^1];
+                var outstr = project.PadRight(dirl, ' ');
+                //项目索引
+                var length = (int)MathF.Ceiling(MathF.Log10(projects.Length));
+                var idxstr = i.ToString().PadLeft(length, '0');
+                //输出项目
+                Console.WriteLine($"{outstr}\t[{idxstr}]({branch})");
             }
         }
         private static void ClearLastLine()

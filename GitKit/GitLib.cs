@@ -138,7 +138,7 @@ namespace GitKit
             return output;
         }
 
-        private static string ExcuteGitCommand(string directory, string command, bool setworkdir = true)
+        public static string ExcuteGitCommand(string directory, string command, bool setworkdir = true)
         {
             string? output;
             var startinfo = new ProcessStartInfo()
