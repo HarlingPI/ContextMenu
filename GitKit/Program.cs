@@ -85,7 +85,7 @@ namespace GitKit
             //初始化所有指令
             InitCommands(working);
             //查找当前目录下的所有Git项目
-            projects = GitLib.FindProjects(working);
+            projects = GitLib.FindProjects(working).ToArray();
             //清除上一行
             ClearLastLine();
             //计算最长的路径长度

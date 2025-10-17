@@ -24,76 +24,82 @@ namespace GitKit
         /// </summary>
         /// <param name="folder"></param>
         /// <returns></returns>
-        public static string[] FindProjects(string folder)
+        public static IEnumerable<string> FindProjects(string folder)
         {
-            var projects = new List<string>();
-            SearchSubProjects(folder, projects);
+            var projects = SearchGitProjects(folder);
             //如果向下没有找到任何Git项目，则向上查找Git项目
             if (projects.IsNullOrEmpty())
             {
                 var root = ExcuteGitCommand(folder, "rev-parse --show-toplevel", false);
                 if(!root.StartsWith("fatal: not a git repository"))
                 {
-                    projects.Add(root.Trim().Replace('/', '\\'));
+                    yield return root.Trim().Replace('/', '\\');
                 }
             }
-            return projects.ToArray();
-        }
-        private static void SearchSubProjects(string folder, List<string> result)
-        {
-            var subfolders = new List<string>();
-            DeepFirstSearch(folder, subfolders);
-            //遍历子文件夹，判断是否为git项目
-            for (int i = 0; i < subfolders.Count; i++)
+            foreach (var item in projects)
             {
-                var subfolder = subfolders[i];
-                //判断是否为独立git项目
-                var project = Path.Combine(subfolder, ".git");
-                if (Directory.Exists(project))
+                yield return item.Trim();
+            }
+        }
+        public static IEnumerable<string> SearchGitProjects(string path)
+        {
+            if (!Directory.Exists(path)) yield break;
+            var queue = new Queue<string>();
+            queue.Enqueue(path);
+            while (queue.Count > 0)
+            {
+                var folder = queue.Dequeue();
+                //查找是否是.git目录
+                if (folder.EndsWith("\\.git", StringComparison.OrdinalIgnoreCase))
                 {
-                    result.Add(subfolder);
+                    yield return Path.GetDirectoryName(folder)!;
+                    continue;
                 }
-                else
+                IEnumerator<string>? enumerator = null;
+                try
                 {
-                    //检查是否有子模块
-                    var mapper = Path.Combine(subfolder, ".gitmodules");
-                    if (File.Exists(mapper))
+                    // 惰性枚举当前目录的文件（不会创建完整数组）
+                    enumerator = Directory.EnumerateFiles(folder).GetEnumerator();
+                }
+                catch (Exception e)
+                {
+                    if (e is UnauthorizedAccessException ||
+                        e is PathTooLongException ||
+                        e is IOException)
                     {
-                        var content = File.ReadAllText(mapper);
-                        foreach (Match match in moduleexp.Matches(content))
+                        continue;
+                    }
+                    else throw;
+                }
+
+                while (enumerator.MoveNext())
+                {
+                    var file = enumerator.Current;
+                    if (file.EndsWith(".gitmodules", StringComparison.OrdinalIgnoreCase))
+                    {
+                        yield return folder;
+                        var content = File.ReadAllText(file);
+                        foreach (Match match in GitLib.moduleexp.Matches(content))
                         {
-                            var subproject = Path.Combine(subfolder, match.Value[7..]);
+                            var subproject = Path.Combine(folder, match.Value[7..]);
                             //获取绝对子模块路径
-                            subproject = Path.GetFullPath(subproject);
-                            result.Add(subproject);
+                            yield return Path.GetFullPath(subproject);
                         }
-                        result.Add(subfolder);
+                        //如果有.gitmodules直接跳过
+                        continue;
                     }
                 }
-            }
-        }
-        private static void DeepFirstSearch(string folder, List<string> result)
-        {
-            try
-            {
-                var subs = Directory.GetDirectories(folder);
-                for (int i = 0; i < subs.Length; i++)
+                enumerator?.Dispose();
+
+                //深度查找子目录
+                try
                 {
-                    DeepFirstSearch(subs[i], result);
+                    foreach (var subfolder in Directory.EnumerateDirectories(folder))
+                    {
+                        queue.Enqueue(subfolder);
+                    }
                 }
-                result.Add(folder);
-            }
-            catch (UnauthorizedAccessException)
-            {
-
-            }
-            catch (IOException)
-            {
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"未知错误: {ex.Message}");
+                catch { }
             }
         }
         /// <summary>

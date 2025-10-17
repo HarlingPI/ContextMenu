@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitKit", "GitKit\GitKit.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomTools", "CustomTools\CustomTools.csproj", "{E80C20D7-9BBA-4EFC-BFD6-EA721F460B7C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\TestProject.csproj", "{FFD3E850-D4D6-4AD6-88F1-326E8C74AA54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PIToolKit.Public", "..\PublicReference\PIToolKit.Public.csproj", "{BA7E0585-9AE6-85B7-1F47-B025BBCB5BF6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{E80C20D7-9BBA-4EFC-BFD6-EA721F460B7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E80C20D7-9BBA-4EFC-BFD6-EA721F460B7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E80C20D7-9BBA-4EFC-BFD6-EA721F460B7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FFD3E850-D4D6-4AD6-88F1-326E8C74AA54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFD3E850-D4D6-4AD6-88F1-326E8C74AA54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFD3E850-D4D6-4AD6-88F1-326E8C74AA54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFD3E850-D4D6-4AD6-88F1-326E8C74AA54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA7E0585-9AE6-85B7-1F47-B025BBCB5BF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA7E0585-9AE6-85B7-1F47-B025BBCB5BF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA7E0585-9AE6-85B7-1F47-B025BBCB5BF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA7E0585-9AE6-85B7-1F47-B025BBCB5BF6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
