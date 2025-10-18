@@ -8,9 +8,25 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<Content Include="Resources\Main.ico" />
-		<Content Include="Resources\Rename.ico"/>
-		<Content Include="Resources\Delete.ico"/>
-		<Content Include="Resources\Config.ico"/>
-		<Content Include="Resources\Unins.ico"/>
+		<Content Include="Resources\Rename.ico" />
+		<Content Include="Resources\Delete.ico" />
+		<Content Include="Resources\Config.ico" />
+		<Content Include="Resources\Unins.ico" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\..\PublicReference\PIToolKit.Public.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Update="Resource.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Resource.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+	<ItemGroup>
+	  <EmbeddedResource Update="Resource.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>Resource.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
 	</ItemGroup>
 </Project>
