@@ -36,7 +36,7 @@ namespace CustomTools {
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        public static global::System.Resources.ResourceManager ResourceManager {
+        internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("CustomTools.Resource", typeof(Resource).Assembly);
@@ -63,6 +63,16 @@ namespace CustomTools {
         /// <summary>
         ///   查找 System.Byte[] 类型的本地化资源。
         /// </summary>
+        internal static byte[] Classify {
+            get {
+                object obj = ResourceManager.GetObject("Classify", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Byte[] 类型的本地化资源。
+        /// </summary>
         internal static byte[] Config {
             get {
                 object obj = ResourceManager.GetObject("Config", resourceCulture);
@@ -76,6 +86,16 @@ namespace CustomTools {
         internal static byte[] Delete {
             get {
                 object obj = ResourceManager.GetObject("Delete", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Byte[] 类型的本地化资源。
+        /// </summary>
+        internal static byte[] Flatten {
+            get {
+                object obj = ResourceManager.GetObject("Flatten", resourceCulture);
                 return ((byte[])(obj));
             }
         }
