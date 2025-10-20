@@ -9,7 +9,9 @@ namespace CustomTools
         static void Main(string[] args)
         {
             Console.WriteLine(FileUtils.GetFullPath("Config.ico"));
-            FileUtils.BytesToFile(Resource.Config, "Config.ico");
+            //FileUtils.BytesToFile(Resource.Config, "Config.ico");
+            FileUtils.BytesToFile((byte[])Resource.ResourceManager.GetObject("Config"), "Config.ico");
+
             Console.WriteLine("Hello, World!");
             Console.Read();
         }
