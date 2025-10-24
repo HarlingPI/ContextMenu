@@ -8,11 +8,16 @@ namespace CustomTools
     {
         static void Main(string[] args)
         {
-            Console.WriteLine(FileUtils.GetFullPath("Config.ico"));
+            var path = "D:/FFOutput/Temp/3D/";
+            //Console.WriteLine(FileUtils.GetFullPath("Config.ico"));
             //FileUtils.BytesToFile(Resource.Config, "Config.ico");
-            FileUtils.BytesToFile((byte[])Resource.ResourceManager.GetObject("Config"), "Config.ico");
+            //FileUtils.BytesToFile((byte[])Resource.ResourceManager.GetObject("Config"), "Config.ico");
 
-            Console.WriteLine("Hello, World!");
+            foreach(var file in FileUtils.SearchFiles(path))
+            {
+                Console.WriteLine(file);
+            }
+
             Console.Read();
         }
     }
