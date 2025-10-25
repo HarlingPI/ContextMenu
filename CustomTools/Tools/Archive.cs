@@ -13,8 +13,8 @@ namespace CustomTools.Tools
     /// 备注:   此文件通过PIToolKit模板创建
     /// </summary>
     /// <remarks>文件归类工具</remarks>
-    [MenuItem("文件归类", null, 0, 1)]
-    public class Archve : ITool
+    [MenuItem("文件归类", "Classify", 0, 1)]
+    public class Archive : ITool
     {
         public void Process(string path)
         {
@@ -22,6 +22,9 @@ namespace CustomTools.Tools
             {
                 Console.WriteLine(file);
             }
+            Console.WriteLine("█▉▊▋▌▍▎▏");
+            Console.WriteLine("⣷ ⣯ ⣟ ⡿ ⢿ ⣻ ⣽ ⣾");
+            Console.WriteLine("◐ ◓ ◑ ◒ ◐ ◓");
         }
     }
 }

@@ -13,7 +13,7 @@ namespace CustomTools
             //FileUtils.BytesToFile(Resource.Config, "Config.ico");
             //FileUtils.BytesToFile((byte[])Resource.ResourceManager.GetObject("Config"), "Config.ico");
 
-            new Archve().Process("D:/FFOutput/Temp/3D/");
+            new Archive().Process("D:/FFOutput/Temp/3D/");
 
             Console.Read();
         }
