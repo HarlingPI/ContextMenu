@@ -1,3 +1,4 @@
+using PIToolKit.Public.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,10 @@ namespace CustomTools.Tools
     {
         public void Process(string path)
         {
-
+            foreach (var file in FileUtils.SearchFiles(path))
+            {
+                Console.WriteLine(file);
+            }
         }
     }
 }
