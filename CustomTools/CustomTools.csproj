@@ -18,7 +18,7 @@
 		<Content Include="Resources\Unins.ico" />
 	</ItemGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\..\PublicReference\PIToolKit.Public.csproj" />
+	  <ProjectReference Include="..\..\NotNet\Public\PIToolKit.Public.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Compile Update="Resource.Designer.cs">

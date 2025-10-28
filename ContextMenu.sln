@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomTools", "CustomTools\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\TestProject.csproj", "{FFD3E850-D4D6-4AD6-88F1-326E8C74AA54}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PIToolKit.Public", "..\PublicReference\PIToolKit.Public.csproj", "{BA7E0585-9AE6-85B7-1F47-B025BBCB5BF6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PIToolKit.Public", "..\NotNet\Public\PIToolKit.Public.csproj", "{BA7E0585-9AE6-85B7-1F47-B025BBCB5BF6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

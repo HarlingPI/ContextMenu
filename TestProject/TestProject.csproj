@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\PublicReference\PIToolKit.Public.csproj" />
+    <ProjectReference Include="..\..\NotNet\Public\PIToolKit.Public.csproj" />
     <ProjectReference Include="..\GitKit\GitKit.csproj" />
   </ItemGroup>
 
