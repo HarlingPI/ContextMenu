@@ -13,7 +13,7 @@ namespace GitKit
     /// 备注:   此文件通过PIToolKit模板创建
     /// </summary>
     /// <remarks></remarks>
-    public static class AnsiUtils
+    public static class ConsoleUtils
     {
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr GetStdHandle(int nStdHandle);
@@ -30,7 +30,7 @@ namespace GitKit
         /// <summary>
         /// 初始化虚拟终端支持（在 Main 中调用）
         /// </summary>
-        public static void EnableAnsiEscapeCodes()
+        public static void EnableVirtualTerminal()
         {
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {

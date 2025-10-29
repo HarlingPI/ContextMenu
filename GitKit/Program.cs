@@ -18,8 +18,9 @@ namespace GitKit
         {
             Console.BufferHeight = 30000;
             //注册非Unicode编码
+            Console.OutputEncoding = Encoding.UTF8;
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            AnsiUtils.EnableAnsiEscapeCodes();
+            ConsoleUtils.EnableVirtualTerminal();
             //检查和注册
             Unins.RegisterContextMenu();
             //执行

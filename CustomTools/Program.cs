@@ -2,6 +2,7 @@
 using PIToolKit.Public.Utils;
 using System.Reflection;
 using System.Resources;
+using System.Text;
 
 namespace CustomTools
 {
@@ -9,6 +10,10 @@ namespace CustomTools
     {
         static void Main(string[] args)
         {
+            Console.BufferHeight = 30000;
+            //注册非Unicode编码
+            Console.OutputEncoding = Encoding.UTF8;
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             //Console.WriteLine(FileUtils.GetFullPath("Config.ico"));
             //FileUtils.BytesToFile(Resource.Config, "Config.ico");
             //FileUtils.BytesToFile((byte[])Resource.ResourceManager.GetObject("Config"), "Config.ico");
