@@ -18,6 +18,7 @@
 		<Content Include="Resources\Unins.ico" />
 	</ItemGroup>
 	<ItemGroup>
+	  <ProjectReference Include="..\..\NotNet\ConsoleKit\ConsoleKit.csproj" />
 	  <ProjectReference Include="..\..\NotNet\Public\PIToolKit.Public.csproj" />
 	</ItemGroup>
 	<ItemGroup>

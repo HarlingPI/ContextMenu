@@ -1,4 +1,5 @@
-﻿using GitKit.Commands;
+﻿using ConsoleKit;
+using GitKit.Commands;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -20,7 +21,7 @@ namespace GitKit
             //注册非Unicode编码
             Console.OutputEncoding = Encoding.UTF8;
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            ConsoleUtils.EnableVirtualTerminal();
+            VirtualTerminal.Enable();
             //检查和注册
             Unins.RegisterContextMenu();
             //执行

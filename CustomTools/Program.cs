@@ -1,4 +1,5 @@
-﻿using CustomTools.Tools;
+﻿using ConsoleKit;
+using CustomTools.Tools;
 using PIToolKit.Public.Utils;
 using System.Reflection;
 using System.Resources;
@@ -14,6 +15,7 @@ namespace CustomTools
             //注册非Unicode编码
             Console.OutputEncoding = Encoding.UTF8;
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            VirtualTerminal.Enable();
             //Console.WriteLine(FileUtils.GetFullPath("Config.ico"));
             //FileUtils.BytesToFile(Resource.Config, "Config.ico");
             //FileUtils.BytesToFile((byte[])Resource.ResourceManager.GetObject("Config"), "Config.ico");

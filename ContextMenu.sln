@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PIToolKit.Public", "..\NotNet\Public\PIToolKit.Public.csproj", "{BA7E0585-9AE6-85B7-1F47-B025BBCB5BF6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleKit", "..\NotNet\ConsoleKit\ConsoleKit.csproj", "{8AE60813-779A-8F1E-1AB5-1D3E9D718D69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{BA7E0585-9AE6-85B7-1F47-B025BBCB5BF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BA7E0585-9AE6-85B7-1F47-B025BBCB5BF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA7E0585-9AE6-85B7-1F47-B025BBCB5BF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8AE60813-779A-8F1E-1AB5-1D3E9D718D69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8AE60813-779A-8F1E-1AB5-1D3E9D718D69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8AE60813-779A-8F1E-1AB5-1D3E9D718D69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8AE60813-779A-8F1E-1AB5-1D3E9D718D69}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
