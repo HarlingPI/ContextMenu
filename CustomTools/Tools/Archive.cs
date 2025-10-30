@@ -20,35 +20,20 @@ namespace CustomTools.Tools
     {
         public void Process(string path)
         {
-            //string[] files = null;
-            //var time = PublicUtility.ReckonTime(() =>
-            //{
-            //    files = FileUtils.SearchFiles(path).ToArray();
-            //});
-
             var task = Task.Run(async () =>
             {
-                for (int i = 0; i < 100; i++)
+                for (var i = 0; i < 10; i++)
                 {
-                    await Task.Delay(100);
+                    await Task.Delay(1000);
                 }
                 return FileUtils.SearchFiles(path).ToArray();
             });
+            Effects.ShowSpinner("Searching", task);
 
-            var symbols = "⣷⣯⣟⡿⢿⣻⣽⣾";
-            var idx = 0;
-            while (!task.IsCompleted)
-            {
-                Console.Write(symbols[idx++]);
-                Thread.Sleep(125);
-                VirtualTerminal.ClearLastChar();
-                idx %= symbols.Length;
-            }
             Console.WriteLine($"已检索到{task.Result.Length}个文件");
 
-
             Console.WriteLine("█▉▊▋▌▍▎▏");
-            Console.WriteLine("⣷ ⣯ ⣟ ⡿ ⢿ ⣻ ⣽ ⣾");
+            Console.WriteLine("⣷⣯⣟⡿⢿⣻⣽⣾");
             Console.WriteLine("◐ ◓ ◑ ◒ ◐ ◓");
         }
     }

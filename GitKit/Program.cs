@@ -81,15 +81,16 @@ namespace GitKit
         /// <param name="folder"></param>
         public static void InitProgram(string folder = null)
         {
-            Console.WriteLine("Searching…");
-            //获取工作路径
-            working = SetAndGetWorkingFolder(folder);
-            //初始化所有指令
-            InitCommands(working);
-            //查找当前目录下的所有Git项目
-            projects = GitLib.FindProjects(working).ToArray();
-            //清除上一行
-            VirtualTerminal.ClearLastLine();
+            Effects.ShowSpinner("Searching", Task.Run(() =>
+            {
+                //获取工作路径
+                working = SetAndGetWorkingFolder(folder);
+                //初始化所有指令
+                InitCommands(working);
+                //查找当前目录下的所有Git项目
+                projects = GitLib.FindProjects(working).ToArray();
+            }));
+
             //计算最长的路径长度
             var dirl = projects.Length > 0 ? projects.Select(p => p.Length).Max() : 0;
             //输出所有找到的Git项目
