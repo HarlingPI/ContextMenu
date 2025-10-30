@@ -1,3 +1,5 @@
+using ConsoleKit;
+using PIToolKit.Public;
 using PIToolKit.Public.Utils;
 using System;
 using System.Collections.Generic;
@@ -18,10 +20,33 @@ namespace CustomTools.Tools
     {
         public void Process(string path)
         {
-            foreach (var file in FileUtils.SearchFiles(path))
+            //string[] files = null;
+            //var time = PublicUtility.ReckonTime(() =>
+            //{
+            //    files = FileUtils.SearchFiles(path).ToArray();
+            //});
+
+            var task = Task.Run(async () =>
             {
-                Console.WriteLine(file);
+                for (int i = 0; i < 100; i++)
+                {
+                    await Task.Delay(100);
+                }
+                return FileUtils.SearchFiles(path).ToArray();
+            });
+
+            var symbols = "⣷⣯⣟⡿⢿⣻⣽⣾";
+            var idx = 0;
+            while (!task.IsCompleted)
+            {
+                Console.Write(symbols[idx++]);
+                Thread.Sleep(125);
+                VirtualTerminal.ClearLastChar();
+                idx %= symbols.Length;
             }
+            Console.WriteLine($"已检索到{task.Result.Length}个文件");
+
+
             Console.WriteLine("█▉▊▋▌▍▎▏");
             Console.WriteLine("⣷ ⣯ ⣟ ⡿ ⢿ ⣻ ⣽ ⣾");
             Console.WriteLine("◐ ◓ ◑ ◒ ◐ ◓");

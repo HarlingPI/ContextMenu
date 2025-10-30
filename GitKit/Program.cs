@@ -89,7 +89,7 @@ namespace GitKit
             //查找当前目录下的所有Git项目
             projects = GitLib.FindProjects(working).ToArray();
             //清除上一行
-            ClearLastLine();
+            VirtualTerminal.ClearLastLine();
             //计算最长的路径长度
             var dirl = projects.Length > 0 ? projects.Select(p => p.Length).Max() : 0;
             //输出所有找到的Git项目
@@ -106,12 +106,6 @@ namespace GitKit
                 //输出项目
                 Console.WriteLine($"{outstr}\t[{idxstr}]({branch})");
             }
-        }
-        private static void ClearLastLine()
-        {
-            Console.Write("\x1B[1A\x1B[2K\r");
-            //强制刷新缓冲区
-            Console.Out.Flush();
         }
 
         private static string SetAndGetWorkingFolder(string folder = null)
