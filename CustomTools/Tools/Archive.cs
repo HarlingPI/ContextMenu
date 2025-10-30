@@ -28,12 +28,11 @@ namespace CustomTools.Tools
                 }
                 return FileUtils.SearchFiles(path).ToArray();
             });
-            Effects.ShowSpinner("Searching", task);
+            Effects.ShowSpinner2Char("Searching", task);
 
             Console.WriteLine($"已检索到{task.Result.Length}个文件");
 
             Console.WriteLine("█▉▊▋▌▍▎▏");
-            Console.WriteLine("⣷⣯⣟⡿⢿⣻⣽⣾");
             Console.WriteLine("◐ ◓ ◑ ◒ ◐ ◓");
         }
     }

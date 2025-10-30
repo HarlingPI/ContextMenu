@@ -81,7 +81,7 @@ namespace GitKit
         /// <param name="folder"></param>
         public static void InitProgram(string folder = null)
         {
-            Effects.ShowSpinner("Searching", Task.Run(() =>
+            Effects.ShowSpinner2Char("Searching", Task.Run(() =>
             {
                 //获取工作路径
                 working = SetAndGetWorkingFolder(folder);
