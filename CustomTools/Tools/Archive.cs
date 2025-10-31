@@ -33,6 +33,12 @@ namespace CustomTools.Tools
             }
             Console.WriteLine($"{Effects.ProgressBar(40, progress = 1)}--Progress:{progress:P4}");
 
+            //var files = FileUtils.SearchFiles("D:\\Projects\\Converter", greed: true);
+            //foreach (var item in files)
+            //{
+            //    Console.WriteLine(item);
+            //}
+
             //Console.WriteLine($"已检索到{task.Result.Length}个文件");
 
             Console.WriteLine(" ▏▎▍▌▋▊▉█");
