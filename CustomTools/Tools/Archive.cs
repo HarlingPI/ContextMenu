@@ -20,19 +20,22 @@ namespace CustomTools.Tools
     {
         public void Process(string path)
         {
-            var task = Task.Run(async () =>
+            //Effects.ShowSpinner2Char("Searching", task);
+
+            var progress = 0f;
+            while (progress <= 1f)
             {
-                for (var i = 0; i < 10; i++)
-                {
-                    await Task.Delay(1000);
-                }
-                return FileUtils.SearchFiles(path).ToArray();
-            });
-            Effects.ShowSpinner2Char("Searching", task);
+                Console.WriteLine($"{Effects.ProgressBar(40, progress)}--Progress:{progress:P4}");
+                //Console.Write(result);
+                Thread.Sleep(100);
+                //Ansi.ClearCurtLine();
+                progress += 0.01f;
+            }
+            Console.WriteLine($"{Effects.ProgressBar(40, progress = 1)}--Progress:{progress:P4}");
 
-            Console.WriteLine($"已检索到{task.Result.Length}个文件");
+            //Console.WriteLine($"已检索到{task.Result.Length}个文件");
 
-            Console.WriteLine("█▉▊▋▌▍▎▏");
+            Console.WriteLine(" ▏▎▍▌▋▊▉█");
             Console.WriteLine("◐ ◓ ◑ ◒ ◐ ◓");
         }
     }
