@@ -4,20 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CustomTools.Tools
+namespace CustomTools
 {
     /// <summary>
     /// 作者:   Harling
-    /// 时间:   2025/10/20 19:52:49
+    /// 时间:   2025/11/1 18:40:06
     /// 备注:   此文件通过PIToolKit模板创建
     /// </summary>
     /// <remarks></remarks>
-    [MenuItem("卸载", 0, Catgray.Manage)]
-    public class Unins : ITool
+    public enum Catgray : byte
     {
-        public void Process(string path)
-        {
-            throw new NotImplementedException();
-        }
+        File = 1,
+        Manage = 255,
     }
 }

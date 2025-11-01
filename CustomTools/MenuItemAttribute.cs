@@ -26,8 +26,8 @@ namespace CustomTools
         /// <summary>
         /// 绘制类别
         /// </summary>
-        public string Catgray { get; private set; }
-        public MenuItemAttribute(string name, int order, string catgray)
+        public Catgray Catgray { get; private set; }
+        public MenuItemAttribute(string name, int order, Catgray catgray)
         {
             Name = name;
             Order = order;

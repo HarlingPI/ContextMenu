@@ -16,7 +16,7 @@ namespace CustomTools.Tools
     /// 备注:   此文件通过PIToolKit模板创建
     /// </summary>
     /// <remarks>文件归类工具</remarks>
-    [MenuItem("文件归类", 0, "1_File")]
+    [MenuItem("文件归类", 0, Catgray.File)]
     public class Classify : ITool
     {
         private readonly Dictionary<string, string> config = new Dictionary<string, string>();
@@ -67,14 +67,10 @@ namespace CustomTools.Tools
         private static void ProcessGroups(string path, KeyValuePair<string, List<string>>[] groups, int count)
         {
             var counter = 0;
-            var progressbar = new string(' ', 40);
-            var progress = 0f;
-
             //隐藏光标
             Ansi.HideCursor();
             //写入初始进度条
-            Effects.ProgressBar(progressbar, progress);
-            Console.Write($"任务进度:{progressbar}({0}/{count})");
+            Console.Write($"任务进度:{Effects.ProgressBar(40, 0)}({counter}/{count})");
 
             for (int i = 0; i < groups.Length; i++)
             {
@@ -87,22 +83,17 @@ namespace CustomTools.Tools
                 {
                     //清除上一次的进度信息
                     Ansi.ClearCurtLine();
-
-                    //移动文件
                     var file = files[j];
+
+                    Console.WriteLine(file);
+                    //更新进度条
+                    Console.Write($"任务进度:{Effects.ProgressBar(40, ++counter / (float)count)}({counter}/{count})");
+                    //移动文件
                     var src = Path.Combine(path, file);
                     var dst = Path.Combine(folder, file);
                     FileUtils.MoveFile(src, dst, true);
-
-                    counter++;
-                    Console.WriteLine(file);
-                    //更新进度条
-                    progress = counter / (float)count;
-                    Effects.ProgressBar(progressbar, progress);
-                    Console.Write($"任务进度:{progressbar}({counter}/{count})");
                 }
             }
-            Console.WriteLine($"\n任务结束!");
             Ansi.ShowCursor();
         }
 

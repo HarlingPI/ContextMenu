@@ -26,7 +26,7 @@ namespace CustomTools
             var assembly = Assembly.GetExecutingAssembly();
             //获取文件版本
             var fileVersionAttr = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>();
-           version = fileVersionAttr?.Version ?? "0.0.0";
+            version = fileVersionAttr?.Version ?? "0.0.0";
         }
 
         static void Main(string[] args)
@@ -41,16 +41,22 @@ namespace CustomTools
             //FileUtils.BytesToFile(Resource.Config, "Config.ico");
             //FileUtils.BytesToFile((byte[])Resource.ResourceManager.GetObject("Config"), "Config.ico");
 #if DEBUG
-            args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Classify" };
+            //args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Classify" };
+            args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Flatten" };
 #endif
-
-            using (var scope = new ConsoleScope(foreground: ConsoleColor.Blue))
+            if (args.IsNullOrEmpty())
             {
-                Console.WriteLine($"{args[0]}");
-                Console.WriteLine($">{args[1]}");
-            }
-            tools[args[1]].Process(args[0]);
 
+            }
+            else
+            {
+                using (var scope = new ConsoleScope(foreground: ConsoleColor.Blue))
+                {
+                    Console.WriteLine($"{args[0]}");
+                    Console.WriteLine($">{args[1]}");
+                }
+                tools[args[1]].Process(args[0]);
+            }
             Console.Read();
         }
     }
