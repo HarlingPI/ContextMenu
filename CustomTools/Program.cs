@@ -93,12 +93,22 @@ namespace CustomTools
             if (needUpdate)
             {
                 Console.WriteLine("右键菜单注册开始");
+
+                //获取工具分组信息
                 var groups = tools.Values
                     .Select(t => t.GetType())
-                    .Select(t => (t.GetCustomAttribute<MenuItemAttribute>(), t.Name))
-                    .Where(t => t.Item1 != null)
-                    .GroupBy(a => a.Item1.Catgray)
-                    .ToDictionary(g => g.Key, g => g.OrderBy(a => a.Item1.Order).ToArray());
+                    .Select(t =>
+                    {
+                        var attr = t.GetCustomAttribute<MenuItemAttribute>();
+                        if (attr != null)
+                        {
+                            attr.DeclaringType = t.Name;
+                        }
+                        return attr;
+                    })
+                    .Where(t => t != null)
+                    .GroupBy(a => a.Catgray)
+                    .ToDictionary(g => g.Key, g => g.OrderBy(a => a.Order).ToArray());
 
                 //Console.WriteLine(FileUtils.GetFullPath("Config.ico"));
                 //FileUtils.BytesToFile(Resource.Config, "Config.ico");

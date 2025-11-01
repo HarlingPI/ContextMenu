@@ -15,6 +15,7 @@ namespace CustomTools
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
     public class MenuItemAttribute : Attribute
     {
+        public string DeclaringType { get; set; }
         /// <summary>
         /// 名称
         /// </summary>
