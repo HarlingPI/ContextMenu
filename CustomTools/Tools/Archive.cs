@@ -26,6 +26,32 @@ namespace CustomTools.Tools
             });
             Effects.ShowSpinner2Char("Searching", task);
 
+            ////为多个具有相同前缀的文件创建文件夹，并移动到新文件夹中
+            //var temp = files
+            //    .Select((f) => (Expes.fixexp.Match(f, 0).Value, f))
+            //    .Concat(files
+            //            .Where(f => f.Contains("Pornhub"))
+            //            .Select(f => ("Pornhub", f)))
+            //    .Concat(files
+            //            .Where(f => f.Contains("完整视频"))
+            //            .Select(f => ("完整视频", f)))
+            //    .Concat(files
+            //            .Where(f => f.Contains("Rule 34"))
+            //            .Select(f => ("Rule 34", f)))
+            //    .Concat(files
+            //            .Where(f => f.Contains("中文音声"))
+            //            .Select(f => ("中文音声", f)))
+            //    //过滤已在文件夹内的文件
+            //    .Where(t =>
+            //    {
+            //        var folder = FileUtils.GetFolderName(t.Item2);
+            //        return t.Item1 != folder;
+            //    })
+            //    .GroupBy((t) => t.Item1)
+            //    .Where((g) => !string.IsNullOrEmpty(g.Key))
+            //    .Where((g) => g.Count() >= 2)
+            //    .ToArray();
+
             //var files = FileUtils.SearchFiles("D:\\Projects\\Converter", greed: true);
             //foreach (var item in files)
             //{
