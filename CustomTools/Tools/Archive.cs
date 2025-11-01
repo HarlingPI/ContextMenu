@@ -20,18 +20,11 @@ namespace CustomTools.Tools
     {
         public void Process(string path)
         {
-            //Effects.ShowSpinner2Char("Searching", task);
-
-            var progress = 0f;
-            while (progress <= 1f)
+            var task = Task.Run(() =>
             {
-                Console.WriteLine($"{Effects.ProgressBar(40, progress)}--Progress:{progress:P4}");
-                //Console.Write(result);
-                Thread.Sleep(100);
-                //Ansi.ClearCurtLine();
-                progress += 0.01f;
-            }
-            Console.WriteLine($"{Effects.ProgressBar(40, progress = 1)}--Progress:{progress:P4}");
+                return FileUtils.SearchFiles(path, greed: false);
+            });
+            Effects.ShowSpinner2Char("Searching", task);
 
             //var files = FileUtils.SearchFiles("D:\\Projects\\Converter", greed: true);
             //foreach (var item in files)

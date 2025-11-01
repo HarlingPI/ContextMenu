@@ -34,11 +34,11 @@ namespace GitKit
             while (true)
             {
                 //输出工作路径
-                var orgcolor = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.Blue;
-                Console.WriteLine($"{working}");
-                Console.Write(">");
-                Console.ForegroundColor = orgcolor;
+                using (var scope = new ConsoleScope(foreground: ConsoleColor.Blue))
+                {
+                    Console.WriteLine($"{working}");
+                    Console.Write(">");
+                }
 
                 var typein = Console.ReadLine();
                 Console.WriteLine();

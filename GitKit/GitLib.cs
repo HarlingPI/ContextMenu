@@ -1,3 +1,4 @@
+using ConsoleKit;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,7 +32,7 @@ namespace GitKit
             if (projects.IsNullOrEmpty())
             {
                 var root = ExcuteGitCommand(folder, "rev-parse --show-toplevel", false);
-                if(!root.StartsWith("fatal: not a git repository"))
+                if (!root.StartsWith("fatal: not a git repository"))
                 {
                     yield return root.Trim().Replace('/', '\\');
                 }
@@ -113,9 +114,7 @@ namespace GitKit
         public static string ExcuteCommand(string project, string command, uint retry = uint.MaxValue, bool setworkdir = true)
         {
             command = command.Trim();
-            var orgcolor = Console.ForegroundColor;
 
-            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine($"\"{command}\":{project}");
             var output = "";
 
@@ -125,22 +124,25 @@ namespace GitKit
 
                 if (/*exitcode != 0 || */errorexp.IsMatch(output))
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(output);
-                    var count = i + 1;
-                    if (count < retry)
+                    using (var scope = new ConsoleScope(foreground: ConsoleColor.Red))
                     {
-                        Console.WriteLine($"第{count}次处理失败,将开始尝试第{count + 1}次处理!");
+                        Console.WriteLine(output);
+                        var count = i + 1;
+                        if (count < retry)
+                        {
+                            Console.WriteLine($"第{count}次处理失败,将开始尝试第{count + 1}次处理!");
+                        }
                     }
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine(output);
+                    using (var scope = new ConsoleScope(foreground: ConsoleColor.Green))
+                    {
+                        Console.WriteLine(output);
+                    }
                     break;
                 }
             }
-            Console.ForegroundColor = orgcolor;
             return output;
         }
 
