@@ -6,9 +6,7 @@
 		<Nullable>enable</Nullable>
 		<ApplicationIcon>Resources\Main.ico</ApplicationIcon>
 		<!-- 版本信息配置 -->
-		<Version>1.0.0.0</Version>
-		<AssemblyVersion>1.0.0.0</AssemblyVersion>
-		<FileVersion>1.0.0.0</FileVersion>
+		<FileVersion>1.1.1</FileVersion>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>

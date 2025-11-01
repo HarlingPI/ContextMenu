@@ -11,6 +11,7 @@ namespace CustomTools
     internal class Program
     {
         private readonly static Dictionary<string, ITool> tools;
+        private readonly static string version;
         static Program()
         {
             var interfacetype = typeof(ITool);
@@ -20,6 +21,12 @@ namespace CustomTools
                 .Where(t => !t.IsAbstract)
                 .Select(t => ReflectUtils.CreateInstance(t))
                 .ToDictionary(t => t.GetType().Name, t => (ITool)t);
+
+            //获取当前程序集
+            var assembly = Assembly.GetExecutingAssembly();
+            //获取文件版本
+            var fileVersionAttr = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>();
+           version = fileVersionAttr?.Version ?? "0.0.0";
         }
 
         static void Main(string[] args)
@@ -41,6 +48,7 @@ namespace CustomTools
                 Console.WriteLine($">{args[1]}");
             }
             tools[args[1]].Process(args[0]);
+
             Console.Read();
         }
     }
