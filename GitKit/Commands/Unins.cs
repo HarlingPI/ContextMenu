@@ -55,33 +55,31 @@ namespace GitKit.Commands
                     // 注册到目录右键菜单
                     using (var key = RootKey.CreateSubKey(DirectoryKey))
                     {
-                        key.SetValue("", MenuItemName);
-                        key.SetValue("Icon", exePath);
-                        key.SetValue("Position", "Bottom");
-
-                        using (var commandKey = key.CreateSubKey("command"))
-                        {
-                            commandKey.SetValue("", cmd);
-                        }
+                        SetKey(key, exePath, cmd);
                     }
 
                     // 注册到目录背景右键菜单
                     using (var key = RootKey.CreateSubKey(BackgroundKey))
                     {
-                        key.SetValue("", MenuItemName);
-                        key.SetValue("Icon", exePath);
-                        key.SetValue("Position", "Bottom");
-
-                        using (RegistryKey commandKey = key.CreateSubKey("command"))
-                        {
-                            commandKey.SetValue("", cmd);
-                        }
+                        SetKey(key, exePath, cmd);
                     }
                     Console.WriteLine("右键菜单注册成功！");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"注册失败: {ex.Message}");
+                }
+            }
+
+            static void SetKey(RegistryKey key, string? exePath, string cmd)
+            {
+                key.SetValue("", MenuItemName);
+                key.SetValue("Icon", exePath);
+                key.SetValue("Position", "Bottom");
+
+                using (var commandKey = key.CreateSubKey("command"))
+                {
+                    commandKey.SetValue("", cmd);
                 }
             }
         }
