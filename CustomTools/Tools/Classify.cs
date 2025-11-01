@@ -22,7 +22,7 @@ namespace CustomTools.Tools
         private readonly Dictionary<string, string> config = new Dictionary<string, string>();
         public Classify()
         {
-            var path = "Classify.xml";
+            var path = "Configs/Classify.xml";
             if (FileUtils.FileIsExist(path))
             {
                 KeyEntry[] array = null;
