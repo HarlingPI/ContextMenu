@@ -119,7 +119,7 @@ namespace GitKit
             {
                 Console.Write($"\"{command}\"");
             }
-            Console.Write($":{project}");
+            Console.WriteLine($":{project}");
 
             var output = "";
             for (int i = 0; i < retry; i++)
