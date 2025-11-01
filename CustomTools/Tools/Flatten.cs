@@ -8,16 +8,15 @@ namespace CustomTools.Tools
 {
     /// <summary>
     /// 作者:   Harling
-    /// 时间:   2025/10/20 19:52:49
+    /// 时间:   2025/11/1 16:10:25
     /// 备注:   此文件通过PIToolKit模板创建
     /// </summary>
-    /// <remarks></remarks>
-    [MenuItem("卸载", 0, "1_File")]
-    public class Unins : ITool
+    /// <remarks>文件展平工具</remarks>
+    public class Flatten : ITool
     {
         public void Process(string path)
         {
-            throw new NotImplementedException();
+            
         }
     }
 }

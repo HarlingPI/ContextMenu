@@ -20,21 +20,16 @@ namespace CustomTools
         /// </summary>
         public string Name { get; private set; }
         /// <summary>
-        /// 图标资源名称
-        /// </summary>
-        public string Icon { get; private set; }
-        /// <summary>
         /// 绘制顺序
         /// </summary>
         public int Order { get; private set; }
         /// <summary>
         /// 绘制类别
         /// </summary>
-        public int Catgray { get; private set; }
-        public MenuItemAttribute(string name, string icon, int order, int catgray)
+        public string Catgray { get; private set; }
+        public MenuItemAttribute(string name, int order, string catgray)
         {
             Name = name;
-            Icon = icon;
             Order = order;
             Catgray = catgray;
         }

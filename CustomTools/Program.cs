@@ -24,10 +24,11 @@ namespace CustomTools
 
         static void Main(string[] args)
         {
-            args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Archive" };
+            args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Classify" };
             Console.BufferHeight = 30000;
-            //注册非Unicode编码
+            Console.InputEncoding = Encoding.UTF8;
             Console.OutputEncoding = Encoding.UTF8;
+            //注册非Unicode编码
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             VirtualTerminal.Enable();
             //Console.WriteLine(FileUtils.GetFullPath("Config.ico"));
@@ -39,9 +40,8 @@ namespace CustomTools
                 Console.WriteLine($"{args[0]}");
                 Console.WriteLine($">{args[1]}");
             }
+            tools[args[1]].Process(args[0]);
             Console.Read();
         }
-
-
     }
 }
