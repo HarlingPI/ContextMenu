@@ -33,14 +33,14 @@ namespace GitKit
             InitProgram(args.Length > 0 ? args[0] : null);
             while (true)
             {
+                string typein = string.Empty;
                 //输出工作路径
                 using (var scope = new ConsoleScope(foreground: ConsoleColor.Blue))
                 {
                     Console.WriteLine($"{working}");
                     Console.Write(">");
+                    typein = Console.ReadLine();
                 }
-
-                var typein = Console.ReadLine();
                 Console.WriteLine();
 
                 if (!string.IsNullOrEmpty(typein))
