@@ -115,9 +115,13 @@ namespace GitKit
         {
             command = command.Trim();
 
-            Console.WriteLine($"\"{command}\":{project}");
-            var output = "";
+            using (var scope = new ConsoleScope(foreground: ConsoleColor.Blue))
+            {
+                Console.Write($"\"{command}\"");
+            }
+            Console.Write($":{project}");
 
+            var output = "";
             for (int i = 0; i < retry; i++)
             {
                 output = ExcuteGitCommand(project, command, setworkdir);
