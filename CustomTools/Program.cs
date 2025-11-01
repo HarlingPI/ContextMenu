@@ -39,12 +39,9 @@ namespace CustomTools
             //注册非Unicode编码
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             VirtualTerminal.Enable();
-            //Console.WriteLine(FileUtils.GetFullPath("Config.ico"));
-            //FileUtils.BytesToFile(Resource.Config, "Config.ico");
-            //FileUtils.BytesToFile((byte[])Resource.ResourceManager.GetObject("Config"), "Config.ico");
 #if DEBUG
             //args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Classify" };
-            args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Flatten" };
+            //args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Flatten" };
 #endif
             if (args.IsNullOrEmpty())
             {
@@ -96,6 +93,16 @@ namespace CustomTools
             if (needUpdate)
             {
                 Console.WriteLine("右键菜单注册开始");
+                var groups = tools.Values
+                    .Select(t => t.GetType())
+                    .Select(t => (t.GetCustomAttribute<MenuItemAttribute>(), t.Name))
+                    .Where(t => t.Item1 != null)
+                    .GroupBy(a => a.Item1.Catgray)
+                    .ToDictionary(g => g.Key, g => g.OrderBy(a => a.Item1.Order).ToArray());
+
+                //Console.WriteLine(FileUtils.GetFullPath("Config.ico"));
+                //FileUtils.BytesToFile(Resource.Config, "Config.ico");
+                //FileUtils.BytesToFile((byte[])Resource.ResourceManager.GetObject("Config"), "Config.ico");
                 // 注册到目录右键菜单
                 using (var key = RootKey.CreateSubKey(foreKey))
                 {
