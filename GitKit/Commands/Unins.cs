@@ -57,6 +57,7 @@ namespace GitKit.Commands
                     {
                         key.SetValue("", MenuItemName);
                         key.SetValue("Icon", exePath);
+                        key.SetValue("Position", "Bottom");
 
                         using (var commandKey = key.CreateSubKey("command"))
                         {
@@ -69,6 +70,7 @@ namespace GitKit.Commands
                     {
                         key.SetValue("", MenuItemName);
                         key.SetValue("Icon", exePath);
+                        key.SetValue("Position", "Bottom");
 
                         using (RegistryKey commandKey = key.CreateSubKey("command"))
                         {

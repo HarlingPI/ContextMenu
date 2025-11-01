@@ -1,7 +1,9 @@
 ﻿using ConsoleKit;
 using CustomTools.Tools;
+using Microsoft.Win32;
 using PIToolKit.Public.Reflection;
 using PIToolKit.Public.Utils;
+using System.Diagnostics;
 using System.Reflection;
 using System.Resources;
 using System.Text;
@@ -11,7 +13,7 @@ namespace CustomTools
     internal class Program
     {
         private readonly static Dictionary<string, ITool> tools;
-        private readonly static string version;
+        public readonly static string Version;
         static Program()
         {
             var interfacetype = typeof(ITool);
@@ -26,7 +28,7 @@ namespace CustomTools
             var assembly = Assembly.GetExecutingAssembly();
             //获取文件版本
             var fileVersionAttr = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>();
-            version = fileVersionAttr?.Version ?? "0.0.0";
+            Version = fileVersionAttr?.Version ?? "0.0.0";
         }
 
         static void Main(string[] args)
@@ -46,7 +48,7 @@ namespace CustomTools
 #endif
             if (args.IsNullOrEmpty())
             {
-
+                CheckAndInstall();
             }
             else
             {
@@ -58,6 +60,45 @@ namespace CustomTools
                 tools[args[1]].Process(args[0]);
             }
             Console.Read();
+        }
+
+        private static void CheckAndInstall()
+        {
+            var RootKey = Registry.CurrentUser;
+            // 右键菜单项名称
+            string MenuItemName = "自定义工具";
+            // 注册表项名称
+            string RegistryKeyName = "CustomTools";
+            string DirectoryKey = @$"Software\Classes\Directory\shell\{RegistryKeyName}";
+            string BackgroundKey = @$"Software\Classes\Directory\Background\shell\{RegistryKeyName}";
+
+
+            var root = RootKey.OpenSubKey(DirectoryKey);
+            if (root == null)
+            {
+                var exePath = Process.GetCurrentProcess().MainModule?.FileName;
+                Console.WriteLine("初次运行,开始注册右键菜单……");
+                // 注册到目录右键菜单
+                using (var key = RootKey.CreateSubKey(DirectoryKey))
+                {
+                    key.SetValue("MUIVerb", MenuItemName);
+                    key.SetValue("Icon", exePath);
+                    key.SetValue("SubCommands", "");
+                    key.SetValue("Version", Version);
+                    key.SetValue("Position", "Bottom");
+                }
+
+                using (var key = RootKey.CreateSubKey(BackgroundKey))
+                {
+                    key.SetValue("MUIVerb", MenuItemName);
+                    key.SetValue("Icon", exePath);
+                    key.SetValue("SubCommands", "");
+                    key.SetValue("Version", Version);
+                    key.SetValue("Position", "Bottom");
+
+                }
+                Console.WriteLine("右键菜单注册成功！");
+            }
         }
     }
 }
