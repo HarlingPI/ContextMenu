@@ -31,7 +31,6 @@ namespace CustomTools
 
         static void Main(string[] args)
         {
-            args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Classify" };
             Console.BufferHeight = 30000;
             Console.InputEncoding = Encoding.UTF8;
             Console.OutputEncoding = Encoding.UTF8;
@@ -41,6 +40,9 @@ namespace CustomTools
             //Console.WriteLine(FileUtils.GetFullPath("Config.ico"));
             //FileUtils.BytesToFile(Resource.Config, "Config.ico");
             //FileUtils.BytesToFile((byte[])Resource.ResourceManager.GetObject("Config"), "Config.ico");
+#if DEBUG
+            args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Classify" };
+#endif
 
             using (var scope = new ConsoleScope(foreground: ConsoleColor.Blue))
             {
