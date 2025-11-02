@@ -116,7 +116,7 @@ namespace CustomTools
 
                             using (var commandKey = itemKey.CreateSubKey("command"))
                             {
-                                commandKey.SetValue("", $"\"{exePath}\" \"%V\" \"{item.DeclaringType}\"", RegistryValueKind.String);
+                                commandKey.SetValue("", $"\"{exePath}\" %V \"{item.DeclaringType}\"", RegistryValueKind.String);
                             }
 
                             if (i < groups.Length - 1 && j == items.Length - 1)
