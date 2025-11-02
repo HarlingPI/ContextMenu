@@ -116,6 +116,8 @@ namespace CustomTools.Tools
                     folder = matches
                         .Select(m => m.Value)
                         .Where(v => !int.TryParse(v[1..^1], out _))
+                        .Where(v => !v[1..^1].Equals("3d", StringComparison.CurrentCultureIgnoreCase))
+                        .Where(v => !v[1..^1].Equals("4k", StringComparison.CurrentCultureIgnoreCase))
                         .FirstOrDefault();
                 }
                 //如果没有匹配到，则通过尝试配置文件指定的关键词进行匹配
