@@ -25,7 +25,7 @@ namespace CustomTools
         // 右键菜单项名称
         private readonly static string displayName = "自定义工具";
         // 注册表项名称
-        private readonly static string mainName = "CustomTools";
+        private readonly static string mainName = "OpenTools";
         private readonly static string foreKey = @$"Software\Classes\Directory\shell\{mainName}";
         private readonly static string backKey = @$"Software\Classes\Directory\Background\shell\{mainName}";
 
@@ -92,7 +92,7 @@ namespace CustomTools
             key.SetValue("Icon", exePath);
             key.SetValue("SubCommands", "");
             key.SetValue("Version", Program.Version);
-            key.SetValue("Position", "Bottom");
+            key.SetValue("Position", "Middle");
         }
         private static void CreateSubKeys((Catgray, MenuItemAttribute?[])[] groups, RegistryKey mainkey)
         {

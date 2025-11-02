@@ -75,7 +75,7 @@ namespace GitKit.Commands
             {
                 key.SetValue("", MenuItemName);
                 key.SetValue("Icon", exePath);
-                key.SetValue("Position", "Bottom");
+                key.SetValue("Position", "Middle");
 
                 using (var commandKey = key.CreateSubKey("command"))
                 {
