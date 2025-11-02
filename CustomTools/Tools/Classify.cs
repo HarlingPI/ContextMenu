@@ -50,9 +50,13 @@ namespace CustomTools.Tools
 
             var classfy = Task.Run(() =>
             {
-                //挑选分类中数量大于1的文件夹进行创建
                 return ClassifyFiles(search.Result.files, search.Result.folders)
-                .Where(kvp => kvp.Value.Count > 1)
+                .Where(kvp =>
+                {
+                    //挑选分类中数量大于1的文件夹进行创建,或者已经存在同名文件夹
+                    return kvp.Value.Count > 1 ||
+                    FileUtils.DirectoryIsExist(Path.Combine(path, kvp.Key));
+                })
                 .ToArray();
             });
             Effects.ShowSpinner2Char("Classfying", search);
