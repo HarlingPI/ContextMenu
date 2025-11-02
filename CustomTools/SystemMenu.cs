@@ -53,7 +53,7 @@ namespace CustomTools
             }
             if (needUpdate)
             {
-                Console.WriteLine("右键菜单注册开始");
+                Console.WriteLine("安装开始");
                 //获取工具分组信息
                 var groups = Program.Tools.Values
                     .Select(t => t.GetType())
@@ -83,7 +83,7 @@ namespace CustomTools
                     SetMainKey(key, displayName, exePath);
                     CreateSubKeys(groups, key);
                 }
-                Console.WriteLine("右键菜单注册成功");
+                Console.WriteLine("安装结束");
             }
         }
         private static void SetMainKey(RegistryKey key, string displayName, string? exePath)

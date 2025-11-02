@@ -109,18 +109,7 @@ namespace CustomTools.Tools
                 var file = files[i];
                 var name = FileUtils.GetFileName(file);
                 string? folder = string.Empty;
-                //通过正则表达式提取文件名前缀作为文件夹名称
-                var matches = Regexs.Fixexp.Matches(name);
-                if (!matches.IsNullOrEmpty())
-                {
-                    folder = matches
-                        .Select(m => m.Value)
-                        .Where(v => !int.TryParse(v[1..^1], out _))
-                        .Where(v => !v[1..^1].Equals("3d", StringComparison.CurrentCultureIgnoreCase))
-                        .Where(v => !v[1..^1].Equals("4k", StringComparison.CurrentCultureIgnoreCase))
-                        .FirstOrDefault();
-                }
-                //如果没有匹配到，则通过尝试配置文件指定的关键词进行匹配
+                //通过尝试配置文件指定的关键词进行匹配
                 if (folder.IsNullOrEmpty())
                 {
                     foreach (var entry in config)
@@ -130,6 +119,18 @@ namespace CustomTools.Tools
                             folder = entry.Value;
                             break;
                         }
+                    }
+                }
+                //如果没有匹配到，通过正则表达式提取文件名前缀作为文件夹名称
+                if (folder.IsNullOrEmpty())
+                {
+                    var matches = Regexs.Fixexp.Matches(name);
+                    if (!matches.IsNullOrEmpty())
+                    {
+                        folder = matches
+                            .Select(m => m.Value)
+                            .Where(v => !int.TryParse(v[1..^1], out _))
+                            .FirstOrDefault();
                     }
                 }
                 //如果仍然没有匹配到，则在现有文件夹中进行模糊匹配
