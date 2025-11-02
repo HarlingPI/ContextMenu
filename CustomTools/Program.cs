@@ -56,12 +56,12 @@ namespace CustomTools
                     Console.WriteLine($">{args[1]}");
                 }
                 Console.WriteLine("意键开始任务");
-                Console.Read();
+                Console.ReadKey();
                 Ansi.ClearLastLine();
 
                 Tools[args[1]].Process(args[0]);
             }
-            Console.Read();
+            Console.ReadKey();
         }
     }
 }
