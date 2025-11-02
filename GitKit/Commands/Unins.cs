@@ -50,7 +50,7 @@ namespace GitKit.Commands
                 {
                     Console.WriteLine("初次运行,开始注册右键菜单……");
                     var exePath = Process.GetCurrentProcess().MainModule?.FileName;
-                    var cmd = $"\"{exePath}\" %V";
+                    var cmd = $"\"{exePath}\" \"%V \"";
 
                     // 注册到目录右键菜单
                     using (var key = RootKey.CreateSubKey(DirectoryKey))

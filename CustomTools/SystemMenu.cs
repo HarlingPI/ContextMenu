@@ -116,7 +116,8 @@ namespace CustomTools
 
                             using (var commandKey = itemKey.CreateSubKey("command"))
                             {
-                                commandKey.SetValue("", $"\"{exePath}\" %V \"{item.DeclaringType}\"", RegistryValueKind.String);
+                                //房子%V命令传入空格需要加引号，又为了避免微软字符转义BUG，%V后面要加一个空格
+                                commandKey.SetValue("", $"\"{exePath}\" \"%V \" \"{item.DeclaringType}\"", RegistryValueKind.String);
                             }
 
                             if (i < groups.Length - 1 && j == items.Length - 1)

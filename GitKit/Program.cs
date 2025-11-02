@@ -119,6 +119,7 @@ namespace GitKit
             }
             else
             {
+                folder = folder.Trim();
                 //target = Environment.ExpandEnvironmentVariables(folder);
                 // 解析相对路径
                 Directory.SetCurrentDirectory(Path.GetFullPath(folder));
