@@ -6,18 +6,19 @@ using PIToolKit.Public.Utils;
 using System.Diagnostics;
 using System.Reflection;
 using System.Resources;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace CustomTools
 {
     internal class Program
     {
-        private readonly static Dictionary<string, ITool> tools;
+        public readonly static Dictionary<string, ITool> Tools;
         public readonly static string Version;
         static Program()
         {
             var interfacetype = typeof(ITool);
-            tools = typeof(ITool).Assembly.GetTypes()
+            Tools = typeof(ITool).Assembly.GetTypes()
                 .Where(t => interfacetype.IsAssignableFrom(t))
                 .Where(t => !t.IsInterface)
                 .Where(t => !t.IsAbstract)
@@ -45,7 +46,7 @@ namespace CustomTools
 #endif
             if (args.IsNullOrEmpty())
             {
-                CheckAndInstall();
+                SystemMenu.CheckInstall();
             }
             else
             {
@@ -54,86 +55,13 @@ namespace CustomTools
                     Console.WriteLine($"{args[0]}");
                     Console.WriteLine($">{args[1]}");
                 }
-                tools[args[1]].Process(args[0]);
+                Console.WriteLine("意键开始任务");
+                Console.Read();
+                Ansi.ClearLastLine();
+
+                Tools[args[1]].Process(args[0]);
             }
             Console.Read();
-        }
-
-        private static void CheckAndInstall()
-        {
-            var exePath = Process.GetCurrentProcess().MainModule?.FileName;
-            var RootKey = Registry.CurrentUser;
-            // 右键菜单项名称
-            var displayName = "自定义工具";
-            // 注册表项名称
-            var mainName = "CustomTools";
-            var foreKey = @$"Software\Classes\Directory\shell\{mainName}";
-            var backKey = @$"Software\Classes\Directory\Background\shell\{mainName}";
-
-            var root = RootKey.OpenSubKey(foreKey);
-
-            var needUpdate = root == null;
-
-            if (!needUpdate)
-            {
-                var version = (string)root.GetValue("Version");
-                var iconpath = (string)root.GetValue("Icon");
-                needUpdate = version != Version || exePath != iconpath;
-
-                if (needUpdate)
-                {
-                    Console.WriteLine("旧版本卸载开始");
-
-                    RootKey.DeleteSubKeyTree(foreKey, false);
-                    RootKey.DeleteSubKeyTree(backKey, false);
-
-                    Console.WriteLine("旧版本卸载结束");
-                }
-            }
-            if (needUpdate)
-            {
-                Console.WriteLine("右键菜单注册开始");
-
-                //获取工具分组信息
-                var groups = tools.Values
-                    .Select(t => t.GetType())
-                    .Select(t =>
-                    {
-                        var attr = t.GetCustomAttribute<MenuItemAttribute>();
-                        if (attr != null)
-                        {
-                            attr.DeclaringType = t.Name;
-                        }
-                        return attr;
-                    })
-                    .Where(t => t != null)
-                    .GroupBy(a => a.Catgray)
-                    .ToDictionary(g => g.Key, g => g.OrderBy(a => a.Order).ToArray());
-
-                //Console.WriteLine(FileUtils.GetFullPath("Config.ico"));
-                //FileUtils.BytesToFile(Resource.Config, "Config.ico");
-                //FileUtils.BytesToFile((byte[])Resource.ResourceManager.GetObject("Config"), "Config.ico");
-                // 注册到目录右键菜单
-                using (var key = RootKey.CreateSubKey(foreKey))
-                {
-                    SetKey(key, displayName, exePath);
-                }
-
-                using (var key = RootKey.CreateSubKey(backKey))
-                {
-                    SetKey(key, displayName, exePath);
-                }
-                Console.WriteLine("右键菜单注册成功");
-            }
-
-            static void SetKey(RegistryKey key, string displayName, string? exePath)
-            {
-                key.SetValue("MUIVerb", displayName);
-                key.SetValue("Icon", exePath);
-                key.SetValue("SubCommands", "");
-                key.SetValue("Version", Version);
-                key.SetValue("Position", "Bottom");
-            }
         }
     }
 }

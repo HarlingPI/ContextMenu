@@ -17,7 +17,9 @@ namespace CustomTools.Tools
     {
         public void Process(string path)
         {
-            throw new NotImplementedException();
+            Console.WriteLine("卸载开始");
+            SystemMenu.UnInstall();
+            Console.WriteLine("卸载成功");
         }
     }
 }
