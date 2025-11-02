@@ -39,7 +39,7 @@ namespace GitKit
                 for (int i = 0; i < parts.Length; i++)
                 {
                     var item = parts[i];
-                    if (item.StartsWith("[") && item.EndsWith("]"))
+                    if (item.StartsWith('[') && item.EndsWith(']'))
                     {
                         //范围选择
                         var range = item[1..^1].Split('~');
