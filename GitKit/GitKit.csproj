@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
 	  <!-- 版本信息配置 -->
-	  <FileVersion>1.1.5</FileVersion>
+	  <FileVersion>1.2.5</FileVersion>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 

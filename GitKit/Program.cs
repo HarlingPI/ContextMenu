@@ -15,6 +15,15 @@ namespace GitKit
         private static Dictionary<string, Command> allcmds = new Dictionary<string, Command>();
         private static string working = "";
         private static string[] projects;
+        public readonly static string Version;
+        static Program()
+        {
+            //获取当前程序集
+            var assembly = Assembly.GetExecutingAssembly();
+            //获取文件版本
+            var fileVersionAttr = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>();
+            Version = fileVersionAttr?.Version ?? "0.0.0";
+        }
         static void Main(string[] args)
         {
             Console.BufferHeight = 30000;
