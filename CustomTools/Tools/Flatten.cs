@@ -42,6 +42,10 @@ namespace CustomTools.Tools
                 var files = kvp.Value;
 
                 var foldername = FileUtils.GetFolderName(folder);
+                if(!Regexs.Fixexp.IsMatch(foldername))
+                {
+                    foldername = $"[{foldername}]";
+                }
 
                 for (int i = 0; i < files.Length; i++)
                 {
