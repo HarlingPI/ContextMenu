@@ -43,7 +43,7 @@ namespace CustomTools
 #if DEBUG
             //args = new[] { "E:\\视频\\动漫\\3D", "Classify" };
             //args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Flatten" };
-            args = new[] { "D:/InstallFolder/Steamcmd/steamapps/workshop/content/431960", "Clean" };
+            args = new[] { @"C:\Users\Harling\Desktop\新建文件夹", "Clean" };
 #endif
             if (args.IsNullOrEmpty())
             {

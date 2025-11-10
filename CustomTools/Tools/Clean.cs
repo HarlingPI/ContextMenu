@@ -2,8 +2,11 @@ using ConsoleKit;
 using PIToolKit.Public.Utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CustomTools.Tools
@@ -21,12 +24,43 @@ namespace CustomTools.Tools
         {
             var search = Task.Run(() =>
             {
-                var files = FileUtils.SearchFiles(path, greed: false).ToArray();
-                var folders = FileUtils.SearchFolders(path, int.MaxValue).ToArray();
-                return (files, folders);
+                return FileUtils.SearchFolders(path, int.MaxValue)
+                .Reverse()
+                .Where(f => FileUtils.SearchFiles(f).IsNullOrEmpty())
+                .ToArray();
             });
             Effects.ShowSpinner2Char("Searching", search);
-            Console.WriteLine($"已搜索到文件夹:{search.Result.folders.Length},文件:{search.Result.files.Length}");
+
+            var folders = search.Result;
+            Console.WriteLine($"已搜索到空文件夹:{folders.Length}");
+            if (folders.IsNullOrEmpty()) Console.WriteLine("本次运行不处理任何文件夹");
+            else ClearEmptyFolders(folders);
+        }
+
+        private static void ClearEmptyFolders(string[] folders)
+        {
+            Console.WriteLine("按任意键继续任务");
+            Console.ReadKey();
+            Ansi.ClearLastLine();
+
+            //隐藏光标
+            Ansi.HideCursor();
+            //写入初始进度条
+            Console.Write($"任务进度:{Effects.ProgressBar(40, 0)}({0}/{folders.Length})");
+
+            for (int i = 0; i < folders.Length; i++)
+            {
+                //清除上一次的进度信息
+                Ansi.ClearCurtLine();
+                var folder = folders[i];
+
+                Console.WriteLine(folder);
+                //更新进度条
+                Console.Write($"任务进度:{Effects.ProgressBar(40, (i + 1f) / folders.Length)}({i + 1}/{folders.Length})");
+                //删除文件夹
+                FileUtils.DeleteFolder(folder);
+            }
+            Ansi.ShowCursor();
         }
     }
 }
