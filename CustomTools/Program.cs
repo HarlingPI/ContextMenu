@@ -43,6 +43,7 @@ namespace CustomTools
 #if DEBUG
             //args = new[] { "E:\\视频\\动漫\\3D", "Classify" };
             //args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Flatten" };
+            args = new[] { "D:/InstallFolder/Steamcmd/steamapps/workshop/content/431960", "Clean" };
 #endif
             if (args.IsNullOrEmpty())
             {
@@ -55,10 +56,6 @@ namespace CustomTools
                     Console.WriteLine($"{args[0]}");
                     Console.WriteLine($">{args[1]}");
                 }
-                Console.WriteLine("任意键开始任务");
-                Console.ReadKey();
-                Ansi.ClearLastLine();
-
                 Tools[args[1]].Process(args[0].Trim());
             }
             Console.ReadKey();

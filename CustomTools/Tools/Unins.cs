@@ -17,7 +17,8 @@ namespace CustomTools.Tools
     {
         public void Process(string path)
         {
-            Console.WriteLine("卸载开始");
+            Console.WriteLine("任意键开始卸载");
+            Console.ReadKey();
             SystemMenu.UnInstall();
             Console.WriteLine("卸载成功");
         }

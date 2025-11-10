@@ -42,7 +42,7 @@ namespace CustomTools.Tools
             var search = Task.Run(() =>
             {
                 var files = FileUtils.SearchFiles(path, greed: false).ToArray();
-                var folders = FileUtils.SearchFolders(path, 1, false).ToArray();
+                var folders = FileUtils.SearchFolders(path, 1).ToArray();
                 return (files, folders);
             });
             Effects.ShowSpinner2Char("Searching", search);
@@ -63,6 +63,10 @@ namespace CustomTools.Tools
             var groups = classfy.Result;
             var count = groups.Sum(g => g.Value.Count);
             Console.WriteLine($"涉及文件夹:{groups.Length}个,涉及文件:{count}个");
+
+            Console.WriteLine("按任意键继续任务");
+            Console.ReadKey();
+            Ansi.ClearLastLine();
 
             if (groups.Length == 0) Console.WriteLine($"本次运行不处理任何文件!");
             else ProcessGroups(path, groups, count);

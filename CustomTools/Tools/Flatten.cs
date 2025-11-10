@@ -23,7 +23,7 @@ namespace CustomTools.Tools
         {
             var search = Task.Run(() =>
             {
-                return FileUtils.SearchFolders(path, 1, false)
+                return FileUtils.SearchFolders(path, 1)
                 .ToDictionary(f => f, f => FileUtils.SearchFiles(f, greed: false)
                                                     .ToArray());
             });
@@ -31,6 +31,10 @@ namespace CustomTools.Tools
             var groups = search.Result;
             var count = groups.Sum(g => g.Value.Length);
             Console.WriteLine($"已搜索到文件夹:{groups.Count},文件:{count}");
+
+            Console.WriteLine("按任意键继续任务");
+            Console.ReadKey();
+            Ansi.ClearLastLine();
 
             //隐藏光标
             Ansi.HideCursor();
