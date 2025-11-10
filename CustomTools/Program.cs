@@ -55,7 +55,7 @@ namespace CustomTools
                     Console.WriteLine($"{args[0]}");
                     Console.WriteLine($">{args[1]}");
                 }
-                Console.WriteLine("意键开始任务");
+                Console.WriteLine("任意键开始任务");
                 Console.ReadKey();
                 Ansi.ClearLastLine();
 
