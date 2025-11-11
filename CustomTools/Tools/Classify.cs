@@ -108,6 +108,7 @@ namespace CustomTools.Tools
         private Dictionary<string, List<string>> ClassifyFiles(string[] files, string[] folders)
         {
             var groups = new Dictionary<string, List<string>>();
+            var foldernames = folders.ToDictionary(FileUtils.GetFolderName, f => f);
             for (int i = 0; i < files.Length; i++)
             {
                 var file = files[i];
@@ -140,9 +141,9 @@ namespace CustomTools.Tools
                 //如果仍然没有匹配到，则在现有文件夹中进行模糊匹配
                 if (folder.IsNullOrEmpty())
                 {
-                    folder = folders
-                        .Where(name.Contains)
-                        .FirstOrDefault();
+                    folder = foldernames
+                        .Where(kvp => name.Contains(kvp.Key))
+                        .FirstOrDefault().Value;
                 }
                 //最后如果还是没有匹配到，则跳过该文件
                 if (folder.IsNullOrEmpty()) continue;
