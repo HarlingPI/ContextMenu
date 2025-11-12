@@ -19,9 +19,30 @@ namespace CustomTools
         public static Regex avexp = new Regex(@"\(Av\d{9},P\d+\)", RegexOptions.Compiled);
         public static Regex expisod = new Regex(@"\[\d{2}\]", RegexOptions.Compiled);
 
+        public static Regex ChnNum = new Regex("[负零一二三四五六七八九十百千万亿]", RegexOptions.Compiled);
         /// <summary>
         /// IDM重复文件标记
         /// </summary>
         public static Regex idmmark = new Regex("_[1-9]+$", RegexOptions.Compiled);
+
+        private static readonly Dictionary<string, string> chinese = new Dictionary<string, string>
+        {
+            {"负", "-"},
+            {"零", "0"},
+            {"一", "1"},
+            {"二", "2"},
+            {"三", "3"},
+            {"四", "4"},
+            {"五", "5"},
+            {"六", "6"},
+            {"七", "7"},
+            {"八", "8"},
+            {"九", "9"},
+            {"十", "10"},
+            {"百", "100"},
+            {"千", "1000"},
+            {"万", "10000"},
+            {"亿", "100000000"},
+        };
     }
 }

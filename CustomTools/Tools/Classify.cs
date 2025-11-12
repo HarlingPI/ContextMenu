@@ -132,8 +132,11 @@ namespace CustomTools.Tools
                     var matches = Regexs.Fixexp.Matches(name);
                     if (!matches.IsNullOrEmpty())
                     {
+                        //忽略所有的纯数字前缀
                         folder = matches
-                            .Select(m => m.Value)
+                            //替换中文数字
+                            .Select(m => Regexs.ChnNum.Replace(m.Value, string.Empty))
+                            .Where(v => v.Length > 2)
                             .Where(v => !int.TryParse(v[1..^1], out _))
                             .FirstOrDefault();
                     }
