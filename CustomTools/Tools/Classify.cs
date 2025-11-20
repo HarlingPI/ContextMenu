@@ -126,6 +126,13 @@ namespace CustomTools.Tools
                         }
                     }
                 }
+                //如果仍然没有匹配到，则在现有文件夹中进行模糊匹配
+                if (folder.IsNullOrEmpty())
+                {
+                    folder = foldernames
+                        .Where(kvp => name.Contains(kvp.Key))
+                        .FirstOrDefault().Value;
+                }
                 //如果没有匹配到，通过正则表达式提取文件名前缀作为文件夹名称
                 if (folder.IsNullOrEmpty())
                 {
@@ -134,19 +141,11 @@ namespace CustomTools.Tools
                     {
                         //忽略所有的纯数字前缀
                         folder = matches
-                            //替换中文数字
-                            .Select(m => Regexs.ChnNum.Replace(m.Value, string.Empty))
+                            .Select(m => m.Value)
                             .Where(v => v.Length > 2)
-                            .Where(v => !int.TryParse(v[1..^1], out _))
+                            .Where(v => !Regexs.Numexp.IsMatch(v[1..^1]))
                             .FirstOrDefault();
                     }
-                }
-                //如果仍然没有匹配到，则在现有文件夹中进行模糊匹配
-                if (folder.IsNullOrEmpty())
-                {
-                    folder = foldernames
-                        .Where(kvp => name.Contains(kvp.Key))
-                        .FirstOrDefault().Value;
                 }
                 //最后如果还是没有匹配到，则跳过该文件
                 if (folder.IsNullOrEmpty()) continue;

@@ -41,7 +41,7 @@ namespace CustomTools
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             VirtualTerminal.Enable();
 #if DEBUG
-            args = new[] { @"F:\视频\动漫\3D", "Classify" };
+            args = new[] { @"D:\Projects\Sundry\BTS", "Classify" };
             //args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Flatten" };
             //args = new[] { @"C:\Users\Harling\Desktop\新建文件夹", "Clean" };
 #endif

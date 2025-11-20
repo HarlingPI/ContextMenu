@@ -19,7 +19,7 @@ namespace CustomTools
         public static Regex avexp = new Regex(@"\(Av\d{9},P\d+\)", RegexOptions.Compiled);
         public static Regex expisod = new Regex(@"\[\d{2}\]", RegexOptions.Compiled);
 
-        public static Regex ChnNum = new Regex("[负零一二三四五六七八九十百千万亿]", RegexOptions.Compiled);
+        public static Regex Numexp = new Regex("^[零一二三四五六七八九十百千万亿\\d]+$", RegexOptions.Compiled);
         /// <summary>
         /// IDM重复文件标记
         /// </summary>
