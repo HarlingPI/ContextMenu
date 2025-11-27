@@ -1,5 +1,6 @@
 ﻿using ConsoleKit;
 using GitKit.Commands;
+using PIToolKit.Public.Utils;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -10,7 +11,7 @@ using System.Text.RegularExpressions;
 
 namespace GitKit
 {
-    internal class Program
+    internal static class Program
     {
         private static Dictionary<string, Command> allcmds = new Dictionary<string, Command>();
         private static string working = "";
@@ -101,7 +102,14 @@ namespace GitKit
             }));
 
             //计算最长的路径长度
-            var dirl = projects.Length > 0 ? projects.Select(p => p.Length).Max() : 0;
+            var infos = projects.Select(p =>
+                {
+                    var wide = p.EnumerateRunes().Count(r => r.IsWide());
+                    var rune = p.EnumerateRunes().Count();
+                    return (wide, rune, display: wide + rune);
+                })
+                .ToArray();
+            var maxl = infos.Max(i => i.display);
             //输出所有找到的Git项目
             for (int i = 0; i < projects.Length; i++)
             {
@@ -109,7 +117,7 @@ namespace GitKit
                 //读取分支名
                 var content = File.ReadAllText(project + "/.git/HEAD");
                 var branch = content[(content.LastIndexOf('/') + 1)..^1];
-                var outstr = project.PadRight(dirl, ' ');
+                var outstr = project.PadRight(maxl - infos[i].wide, ' ');
                 //项目索引
                 var length = (int)MathF.Ceiling(MathF.Log10(projects.Length));
                 var idxstr = i.ToString().PadLeft(length, '0');
@@ -169,6 +177,64 @@ namespace GitKit
                 .OrderBy(kvp => kvp.Key)
                 .Select(kvp => kvp.Value)
                 .ToArray();
+        }
+        public static bool IsWide(this Rune r)
+        {
+            int code = r.Value;
+
+            // Fast-path: ASCII 永远是半角
+            if (code <= 0x007F) return false;
+
+            // ---- East Asian Wide (W) ----
+            if (
+                (code >= 0x1100 && code <= 0x115F) ||   // Hangul Jamo
+                (code >= 0x2329 && code <= 0x232A) ||
+                (code >= 0x2E80 && code <= 0x2FFF) ||   // CJK Radicals + ID symbols
+                (code >= 0x3000 && code <= 0x303E) ||
+                (code >= 0x3040 && code <= 0x309F) ||   // Hiragana
+                (code >= 0x30A0 && code <= 0x30FF) ||   // Katakana
+                (code >= 0x3100 && code <= 0x312F) ||   // Bopomofo
+                (code >= 0x3130 && code <= 0x318F) ||   // Hangul Compatibility Jamo
+                (code >= 0x31A0 && code <= 0x31BF) ||
+                (code >= 0x31C0 && code <= 0x31EF) ||
+                (code >= 0x3200 && code <= 0x32FF) ||
+                (code >= 0x3300 && code <= 0x33FF) ||
+                (code >= 0x3400 && code <= 0x4DBF) ||   // CJK Ext A
+                (code >= 0x4E00 && code <= 0x9FFF) ||   // CJK Unified Ideographs
+                (code >= 0xA960 && code <= 0xA97F) ||
+                (code >= 0xAC00 && code <= 0xD7A3) ||   // Hangul
+                (code >= 0xF900 && code <= 0xFAFF) ||   // CJK Compatibility Ideographs
+                (code >= 0xFE10 && code <= 0xFE19) ||
+                (code >= 0xFE30 && code <= 0xFE6F) ||
+                (code >= 0xFF01 && code <= 0xFF60) ||   // Full-width ASCII variants
+                (code >= 0xFFE0 && code <= 0xFFE6)
+            )
+                return true;
+
+            // ---- Emoji（全部）----
+            // Unicode Emoji 范围极广，全部 Surrogate Pair（U+1xxxx）
+            // 全都统一按宽字符处理
+            if (code >= 0x1F000 && code <= 0x1FAFF) return true;  // Emoji blocks
+            if (code >= 0x1FC00 && code <= 0x1FFFF) return true;  // 新增扩展区（未来兼容）
+
+            // 其他高位平面（大概率是 emoji 或 pictograph）
+            if (code > 0x10000) return true;
+
+            return false;
+        }
+        /// <summary>
+        /// 获取显示宽度
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        public static int GetDisplayWidth(this string str)
+        {
+            int width = 0;
+            foreach (var rune in str.EnumerateRunes())
+            {
+                width += IsWide(rune) ? 2 : 1;
+            }
+            return width;
         }
     }
 }
