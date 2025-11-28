@@ -109,7 +109,7 @@ namespace GitKit
                     return (wide, rune, display: wide + rune);
                 })
                 .ToArray();
-            var maxl = infos.Max(i => i.display);
+            var maxl = infos.IsNullOrEmpty() ? 0 : infos.Max(i => i.display);
             //输出所有找到的Git项目
             for (int i = 0; i < projects.Length; i++)
             {
