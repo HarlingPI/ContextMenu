@@ -47,8 +47,7 @@ namespace GitKit
                 //输出工作路径
                 using (var scope = new ConsoleScope(foreground: ConsoleColor.Blue))
                 {
-                    Console.WriteLine($"{working}");
-                    Console.Write(">");
+                    Console.Write($"{working}>");
                     typein = Console.ReadLine();
                 }
                 Console.WriteLine();
