@@ -1,8 +1,14 @@
-﻿<ArrayOfKeyEntry>
-	<KeyEntry Key="Pornhub" Folder="Pornhub" />
-	<KeyEntry Key="完整视频" Folder="完整视频" />
-	<KeyEntry Key="Rule 34 World - " Folder="[Rule34]" />
-	<KeyEntry Key="中文音声" Folder="中文音声" />
-	<KeyEntry Key="淫词艳曲" Folder="淫词艳曲" />
-	<KeyEntry Key="骚麦" Folder="淫词艳曲" />
-</ArrayOfKeyEntry>
+﻿<Config>
+	<Ignores>
+		<Item V="[后篇]" />
+		<Item V="[前篇]" />
+	</Ignores>
+	<Mapper>
+		<Item K="Pornhub" V="Pornhub" />
+		<Item K="完整视频" V="完整视频" />
+		<Item K="Rule 34 World - " V="[Rule34]" />
+		<Item K="中文音声" V="中文音声" />
+		<Item K="淫词艳曲" V="淫词艳曲" />
+		<Item K="骚麦" V="淫词艳曲" />
+	</Mapper>
+</Config>
