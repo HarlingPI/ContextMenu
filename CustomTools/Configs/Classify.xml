@@ -2,6 +2,10 @@
 	<Ignores>
 		<Item V="[后篇]" />
 		<Item V="[前篇]" />
+		<Item V="(4K)" />
+		<Item V="[4K]" />
+		<Item V="(2K)" />
+		<Item V="[前編]" />
 	</Ignores>
 	<Mapper>
 		<Item K="Pornhub" V="Pornhub" />

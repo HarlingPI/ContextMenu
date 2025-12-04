@@ -4,6 +4,7 @@ using Microsoft.Win32;
 using PIToolKit.Public.Reflection;
 using PIToolKit.Public.Utils;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Resources;
 using System.Runtime.CompilerServices;
@@ -17,6 +18,9 @@ namespace CustomTools
         public readonly static string Version;
         static Program()
         {
+            //强制更改工作目录，覆盖右键菜单被重定向的目录
+            Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+
             var interfacetype = typeof(ITool);
             Tools = typeof(ITool).Assembly.GetTypes()
                 .Where(t => interfacetype.IsAssignableFrom(t))
@@ -41,7 +45,7 @@ namespace CustomTools
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             VirtualTerminal.Enable();
 #if DEBUG
-            args = new[] { @"D:\Projects\PIToolKit\ContextMenu\Publish", "Classify" };
+            args = new[] { @"E:\视频\动漫\3D", "Classify" };
             //args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Flatten" };
             //args = new[] { @"C:\Users\Harling\Desktop\新建文件夹", "Clean" };
 #endif
