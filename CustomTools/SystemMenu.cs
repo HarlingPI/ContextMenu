@@ -152,7 +152,7 @@ namespace CustomTools
         private static string ExtractIcon(string name)
         {
             var bytes = (byte[])Resource.ResourceManager.GetObject(name);
-            var path = FileUtils.GetFullPath($"Icons/{name}.ico");
+            var path = FileUtils.GetFullPath($"Configs/{name}.ico");
             FileUtils.BytesToFile(bytes, path);
             return path;
         }
