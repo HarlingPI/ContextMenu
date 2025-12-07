@@ -47,7 +47,33 @@ namespace CustomTools.Tools
             if (search.Result.Length == 0) Console.WriteLine($"本次运行不处理任何文件!");
             else RenameFiles(path, search.Result);
         }
+        private (string file, string newname)[] SearchFile(string path)
+        {
+            return FileUtils.SearchFiles(path)
+                .Select(f =>
+                {
+                    var orgname = FileUtils.GetFileName(f);
+                    var ext = FileUtils.GetExtension(orgname);
+                    var newname = FileUtils.GetFileName(orgname, false);
 
+                    //移除符合条件的部分
+                    newname = Regexs.Fixexp.Replace(newname, string.Empty);
+                    //再移除配置文件中的内容
+                    foreach (var item in fixes)
+                    {
+                        newname = newname.Replace(item, string.Empty);
+                    }
+                    //移除前后的空格
+                    newname = newname.Trim();
+                    //拼接后缀名
+                    newname += ext;
+
+                    return (file: f, orgname, newname);
+                })
+                .Where(t => t.orgname != t.newname)
+                .Select(t => (t.file, t.newname))
+                .ToArray();
+        }
         private static void RenameFiles(string path, (string file, string newname)[] files)
         {
             //隐藏光标
@@ -86,34 +112,6 @@ namespace CustomTools.Tools
                 Console.Write($"任务进度:{Effects.ProgressBar(40, counter / (float)files.Length)}({counter}/{files.Length})");
             }
             Ansi.ShowCursor();
-        }
-
-        private (string file, string newname)[] SearchFile(string path)
-        {
-            return FileUtils.SearchFiles(path, greed: false)
-                .Select(f =>
-                {
-                    var orgname = FileUtils.GetFileName(f);
-                    var ext = FileUtils.GetExtension(orgname);
-                    var newname = FileUtils.GetFileName(orgname, false);
-
-                    //移除符合条件的部分
-                    newname = Regexs.Fixexp.Replace(newname, string.Empty);
-                    //再移除配置文件中的内容
-                    foreach (var item in fixes)
-                    {
-                        newname = newname.Replace(item, string.Empty);
-                    }
-                    //移除前后的空格
-                    newname = newname.Trim();
-                    //拼接后缀名
-                    newname += ext;
-
-                    return (file: f, orgname, newname);
-                })
-                .Where(t => t.orgname != t.newname)
-                .Select(t => (t.file, t.newname))
-                .ToArray();
         }
     }
 }

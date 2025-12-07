@@ -48,7 +48,7 @@ namespace CustomTools
             //args = new[] { @"E:\视频\动漫\3D", "Classify" };
             //args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Flatten" };
             //args = new[] { @"C:\Users\Harling\Desktop\新建文件夹", "Clean" };
-            args = new[] { @"D:\FFOutput\Temp\AV", "Rename" };
+            args = new[] { @"E:\视频\动漫\Motion Anime", "Rename" };
 #endif
             if (args.IsNullOrEmpty())
             {
