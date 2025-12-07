@@ -20,7 +20,7 @@ namespace CustomTools.Tools
     [MenuItem("文件归类", 0, Catgray.File)]
     public class Classify : ITool
     {
-        private const string path = "Configs/Classify.xml";
+        private const string path = "Configs/.classify";
         private readonly Config config = null;
         public Classify()
         {
