@@ -56,12 +56,12 @@ namespace CustomTools
             }
             else
             {
+                var path = args[0].Trim();
                 using (var scope = new ConsoleScope(foreground: ConsoleColor.Blue))
                 {
-                    Console.WriteLine($"{args[0]}");
-                    Console.WriteLine($">{args[1]}");
+                    Console.WriteLine($"{path}>{args[1]}");
                 }
-                Tools[args[1]].Process(args[0].Trim());
+                Tools[args[1]].Process(path);
             }
             Console.ReadKey();
         }
