@@ -34,10 +34,10 @@ namespace CustomTools.Tools
             var folders = search.Result;
             Console.WriteLine($"已搜索到空文件夹:{folders.Length}");
             if (folders.IsNullOrEmpty()) Console.WriteLine("本次运行不处理任何文件夹");
-            else ClearEmptyFolders(folders);
+            else ClearEmptyFolders(path, folders);
         }
 
-        private static void ClearEmptyFolders(string[] folders)
+        private static void ClearEmptyFolders(string path, string[] folders)
         {
             Console.WriteLine("按任意键继续任务");
             Console.ReadKey();
@@ -54,7 +54,7 @@ namespace CustomTools.Tools
                 Ansi.ClearCurtLine();
                 var folder = folders[i];
 
-                Console.WriteLine(folder);
+                Console.WriteLine(folder.Replace(path, "."));
                 //更新进度条
                 Console.Write($"任务进度:{Effects.ProgressBar(40, (i + 1f) / folders.Length)}({i + 1}/{folders.Length})");
                 //删除文件夹
