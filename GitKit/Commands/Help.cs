@@ -1,3 +1,4 @@
+using ConsoleKit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,25 +26,26 @@ namespace GitKit.Commands
 
         public override void Excute(string[] projects, uint retry, params string[] args)
         {
-            var orgcolor = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.White;
-            var cmds = Program.GetCommands();
-            for (int i = 0; i < cmds.Length; i++)
+            using (var scope = new ConsoleScope(ConsoleColor.White))
             {
-                var cmd = cmds[i];
-                Console.WriteLine($"{cmd.GetType().Name.ToLower()}\t{cmd.Description}");
-                Console.WriteLine($"{cmd.Formate}");
-                var paramsinfo = cmd.Parametes;
-                if(paramsinfo != null && paramsinfo.Length > 0)
+                Console.WriteLine($"Version：{Program.Version}");
+                var cmds = Program.GetCommands();
+                for (int i = 0; i < cmds.Length; i++)
                 {
-                    for (int j = 0; j < paramsinfo.Length; j++)
+                    var cmd = cmds[i];
+                    Console.WriteLine($"{cmd.GetType().Name.ToLower()}\t{cmd.Description}");
+                    Console.WriteLine($"{cmd.Formate}");
+                    var paramsinfo = cmd.Parametes;
+                    if (paramsinfo != null && paramsinfo.Length > 0)
                     {
-                        Console.WriteLine($"\t{paramsinfo[j]}");
+                        for (int j = 0; j < paramsinfo.Length; j++)
+                        {
+                            Console.WriteLine($"\t{paramsinfo[j]}");
+                        }
                     }
+                    Console.WriteLine();
                 }
-                Console.WriteLine();
             }
-            Console.ForegroundColor = orgcolor;
         }
     }
 }

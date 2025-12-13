@@ -64,9 +64,16 @@ namespace GitKit
                     else
                     {
                         //默认命令执行
-                        for (int i = 0; i < analyzer.FilteredProjects.Length; i++)
+                        if (analyzer.FilteredProjects.IsNullOrEmpty())
                         {
-                            GitLib.ExcuteCommand(analyzer.FilteredProjects[i], typein, analyzer.Retry);
+                            GitLib.ExcuteCommand(working, typein, analyzer.Retry);
+                        }
+                        else
+                        {
+                            for (int i = 0; i < analyzer.FilteredProjects.Length; i++)
+                            {
+                                GitLib.ExcuteCommand(analyzer.FilteredProjects[i], typein, analyzer.Retry);
+                            }
                         }
                     }
                     //执行附加命令
