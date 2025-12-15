@@ -45,7 +45,7 @@ namespace CustomTools
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             VirtualTerminal.Enable();
 #if DEBUG
-            args = new[] { @"E:\视频\动漫\3D", "Classify" };
+            args = new[] { @"E:\视频\动漫\短篇", "Classify" };
             //args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Flatten" };
             //args = new[] { @"C:\Users\Harling\Desktop\新建文件夹", "Clean" };
             //args = new[] { @"E:\视频\动漫\Motion Anime", "Rename" };

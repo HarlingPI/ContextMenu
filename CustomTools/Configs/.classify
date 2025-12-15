@@ -6,13 +6,18 @@
 		<Item V="[4K]" />
 		<Item V="(2K)" />
 		<Item V="[前編]" />
+		<Item V="(WMV)" />
+		<Item V="(MP4)" />
+		<Item V="(後編)" />
+		<Item V="(前編)" />
 	</Ignores>
 	<Mapper>
 		<Item K="Pornhub" V="Pornhub" />
 		<Item K="完整视频" V="完整视频" />
+		<Item K=" - Rule 34 World" V="[Rule34]" />
 		<Item K="Rule 34 World - " V="[Rule34]" />
 		<Item K="中文音声" V="中文音声" />
-		<Item K="淫词艳曲" V="淫词艳曲" />
-		<Item K="骚麦" V="淫词艳曲" />
+		<Item K="淫词艳曲" V="[淫词艳曲]" />
+		<Item K="骚麦" V="[淫词艳曲]" />
 	</Mapper>
 </Config>

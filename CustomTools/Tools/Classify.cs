@@ -103,7 +103,7 @@ namespace CustomTools.Tools
             for (int i = 0; i < files.Length; i++)
             {
                 var file = files[i];
-                var name = FileUtils.GetFileName(file, false);
+                var name = FileUtils.GetFileName(file);
                 string? folder = string.Empty;
                 //通过尝试配置文件指定的关键词进行匹配
                 if (folder.IsNullOrEmpty())
