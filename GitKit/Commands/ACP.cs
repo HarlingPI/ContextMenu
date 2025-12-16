@@ -1,7 +1,10 @@
+using ConsoleKit;
+using PIToolKit.Public.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace GitKit.Commands
@@ -14,6 +17,7 @@ namespace GitKit.Commands
     /// <remarks></remarks>
     public class ACP : Command
     {
+        private static readonly Regex remoteexg = new Regex(@"\[remote \""\w+\""\]", RegexOptions.Compiled);
         public override string Description => "git中'add'、'commit'、'push'命令的结合命令";
 
         public override string Formate => "acp m f r";
@@ -52,8 +56,25 @@ namespace GitKit.Commands
                 GitLib.ExcuteCommand(project, add, retry);
                 //commit
                 GitLib.ExcuteCommand(project, $"commit -m {option}", retry);
-                //push
-                GitLib.ExcuteCommand(project, $"push {string.Join(" ", args)}", retry);
+                //判断有没有远程连接
+                var cfgpath = Path.Combine(project, ".git/config");
+                if (remoteexg.IsMatch(FileUtils.ReadAllText(cfgpath)))
+                {
+                    //push
+                    GitLib.ExcuteCommand(project, $"push {string.Join(" ", args)}", retry);
+                }
+                else
+                {
+                    using (var scope = new ConsoleScope(foreground: ConsoleColor.Blue))
+                    {
+                        Console.Write($"\"push {string.Join(" ", args)}\"");
+                    }
+                    Console.Write($":{project}");
+                    using (var scope = new ConsoleScope(ConsoleColor.Yellow))
+                    {
+                        Console.WriteLine($"->没有remote,无法push!");
+                    }
+                }
             }
         }
     }
