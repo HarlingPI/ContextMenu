@@ -34,14 +34,15 @@ namespace CustomTools.Tools
             {
                 var files = FileUtils.SearchFiles(path, greed: false).ToArray();
                 var folders = FileUtils.SearchFolders(path, 1).ToArray();
-                return (files, folders);
+                var pathparts = path.Split(new char[] { '\\', '/' })[1..];
+                return (files, folders, pathparts);
             });
             Effects.ShowSpinner2Char("Searching", search);
             Console.WriteLine($"已搜索到文件夹:{search.Result.folders.Length},文件:{search.Result.files.Length}");
 
             var classfy = Task.Run(() =>
             {
-                return ClassifyFiles(search.Result.files, search.Result.folders)
+                return ClassifyFiles(search.Result.files, search.Result.folders, search.Result.pathparts)
                 .Where(kvp =>
                 {
                     //挑选分类中数量大于1的文件夹进行创建,或者已经存在同名文件夹
@@ -96,7 +97,7 @@ namespace CustomTools.Tools
             Ansi.ShowCursor();
         }
 
-        private Dictionary<string, List<string>> ClassifyFiles(string[] files, string[] folders)
+        private Dictionary<string, List<string>> ClassifyFiles(string[] files, string[] folders, string[] pathparts)
         {
             var groups = new Dictionary<string, List<string>>();
             var foldernames = folders.ToDictionary(FileUtils.GetFolderName, f => f);
@@ -130,15 +131,18 @@ namespace CustomTools.Tools
                     var matches = Regexs.Fixexp.Matches(name);
                     if (!matches.IsNullOrEmpty())
                     {
-                        //忽略所有的纯数字前缀
                         folder = matches
                             .Select(m => m.Value)
+                            //忽略所有的纯数字前缀
                             .Where(v => !config.Ignores.Contains(v))
                             .Where(v => v.Length > 2)
                             .Where(v => !Regexs.Numexp.IsMatch(v[1..^1]))
                             .FirstOrDefault();
                     }
                 }
+                //忽略路径中已有的部分
+                if (pathparts.Contains(folder)) folder = string.Empty;
+
                 //最后如果还是没有匹配到，则跳过该文件
                 if (folder.IsNullOrEmpty()) continue;
                 if (!groups.TryGetValue(folder, out var list))
