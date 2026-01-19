@@ -39,6 +39,9 @@ namespace GitKit.Commands
             else
             {
                 var o = args[^1].ToLower();
+                //支持相对路径
+                args[0] = FileUtils.GetFullPath(args[0]);
+
                 if (o == "s" || args.Length == 1)
                 {
                     cmd = $"update-index --skip-worktree {args[0]}";
