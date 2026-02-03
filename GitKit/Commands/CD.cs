@@ -49,6 +49,7 @@ namespace GitKit.Commands
                 folder = args[0];
                 folder = folder.Replace("\"", "");
             }
+            if (string.IsNullOrEmpty(folder)) folder = ".";
             Program.InitProgram(folder);
         }
     }
