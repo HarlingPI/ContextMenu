@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -18,15 +20,14 @@ namespace GitKit
     /// <remarks></remarks>
     public static class GitLib
     {
-        private static Regex moduleexp = new Regex("path = [\\w]+", RegexOptions.Compiled);
         private static Regex errorexp = new Regex("fatal:|error:", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
+        private static Regex guidexp = new Regex(@"[a-z0-9]{40}", RegexOptions.Compiled);
         /// <summary>
         /// 查找指定路径下的所有Git项目
         /// </summary>
         /// <param name="folder"></param>
         /// <returns></returns>
-        public static IEnumerable<string> FindProjects(string folder)
+        public static IEnumerable<ProjectInfo> FindProjects(string folder)
         {
             var projects = SearchGitProjects(folder);
             //如果向下没有找到任何Git项目，则向上查找Git项目
@@ -35,15 +36,28 @@ namespace GitKit
                 var root = ExcuteGitCommand(folder, "rev-parse --show-toplevel", false);
                 if (!root.StartsWith("fatal: not a git repository"))
                 {
-                    yield return root.Trim().Replace('/', '\\');
+                    var info = new ProjectInfo()
+                    {
+                        Path = root.Trim().Replace('/', '\\'),
+                        Branch = ExcuteGitCommand(folder, "rev-parse --abbrev-ref HEAD", false).Trim()
+                    };
+                    yield return GetGitInfo(root.Trim().Replace('/', '\\'));
                 }
             }
             foreach (var item in projects)
             {
-                yield return item.Trim();
+                yield return item;
             }
         }
-        public static IEnumerable<string> SearchGitProjects(string path)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ProjectInfo[] SearchGitProjects(string path)
+        {
+            return SearchGitProjectsInternal(path)
+                .Where(p => !guidexp.IsMatch(p.Branch))
+                .Distinct()
+                .ToArray();
+        }
+        private static IEnumerable<ProjectInfo> SearchGitProjectsInternal(string path)
         {
             if (!Directory.Exists(path)) yield break;
             var queue = new Queue<string>();
@@ -54,7 +68,7 @@ namespace GitKit
                 //查找是否是.git目录
                 if (folder.EndsWith("\\.git", StringComparison.OrdinalIgnoreCase))
                 {
-                    yield return Path.GetDirectoryName(folder)!;
+                    yield return GetGitInfo(Path.GetDirectoryName(folder));
                     continue;
                 }
                 IEnumerator<string>? enumerator = null;
@@ -79,13 +93,33 @@ namespace GitKit
                     var file = enumerator.Current;
                     if (file.EndsWith(".gitmodules", StringComparison.OrdinalIgnoreCase))
                     {
-                        yield return folder;
-                        var content = File.ReadAllText(file);
-                        foreach (Match match in GitLib.moduleexp.Matches(content))
+                        yield return GetGitInfo(folder);
+                        var lines = File.ReadAllLines(file);
+                        var modules = lines.Select((l, i) => new { Line = l.Trim(), Index = i })
+                            .Where(x => x.Line.StartsWith("[submodule"))
+                            .Select(x => x.Index)
+                            .ToArray();
+                        for (int i = 0; i < modules.Length; i++)
                         {
-                            var subproject = Path.Combine(folder, match.Value[7..]);
-                            //获取绝对子模块路径
-                            yield return Path.GetFullPath(subproject);
+                            var info = new ProjectInfo();
+                            int start = modules[i] + 1;
+                            while (info.IsEmpty)
+                            {
+                                var line = lines[start].Trim();
+
+                                if (line.StartsWith("path"))
+                                {
+                                    var subproject = Path.Combine(folder, line[7..]);
+                                    //获取绝对子模块路径
+                                    info.Path = Path.GetFullPath(subproject);
+                                }
+                                else if (line.StartsWith("branch"))
+                                {
+                                    info.Branch = line[9..];
+                                }
+                                start++;
+                            }
+                            yield return info;
                         }
                         //如果有.gitmodules直接跳过
                         continue;
@@ -103,6 +137,14 @@ namespace GitKit
                 }
                 catch { }
             }
+
+
+        }
+        private static ProjectInfo GetGitInfo(string folder)
+        {
+            var content = File.ReadAllText(folder + "/.git/HEAD");
+            var pb = content[(content.LastIndexOf('/') + 1)..^1];
+            return new ProjectInfo() { Path = folder, Branch = pb };
         }
         /// <summary>
         /// 执行指令

@@ -15,7 +15,7 @@ namespace GitKit
     {
         private static Dictionary<string, Command> allcmds = new Dictionary<string, Command>();
         private static string working = "";
-        private static string[] projects;
+        private static ProjectInfo[] projects;
         public readonly static string Version;
         static Program()
         {
@@ -59,7 +59,7 @@ namespace GitKit
                     var cmdname = analyzer.Words[0];
                     if (allcmds.TryGetValue(cmdname.ToLower(), out var command))
                     {
-                        command.Excute(analyzer.FilteredProjects, analyzer.Retry, analyzer.Words[1..]);
+                        command.Excute(analyzer.FilteredProjects.Select(p => p.Path).ToArray(), analyzer.Retry, analyzer.Words[1..]);
                     }
                     else
                     {
@@ -72,7 +72,7 @@ namespace GitKit
                         {
                             for (int i = 0; i < analyzer.FilteredProjects.Length; i++)
                             {
-                                GitLib.ExcuteCommand(analyzer.FilteredProjects[i], typein, analyzer.Retry);
+                                GitLib.ExcuteCommand(analyzer.FilteredProjects[i].Path, typein, analyzer.Retry);
                             }
                         }
                     }
@@ -97,6 +97,9 @@ namespace GitKit
         /// <param name="folder"></param>
         public static void InitProgram(string folder = null)
         {
+#if DEBUG
+            folder = "D:\\Projects\\ZWS3";
+#endif
             Effects.ShowSpinner2Char("Searching", Task.Run(() =>
             {
                 //获取工作路径
@@ -110,8 +113,8 @@ namespace GitKit
             //计算最长的路径长度
             var infos = projects.Select(p =>
                 {
-                    var wide = p.EnumerateRunes().Count(r => r.IsWide());
-                    var rune = p.EnumerateRunes().Count();
+                    var wide = p.Path.EnumerateRunes().Count(r => r.IsWide());
+                    var rune = p.Path.EnumerateRunes().Count();
                     return (wide, rune, display: wide + rune);
                 })
                 .ToArray();
@@ -120,15 +123,12 @@ namespace GitKit
             for (int i = 0; i < projects.Length; i++)
             {
                 var project = projects[i];
-                //读取分支名
-                var content = File.ReadAllText(project + "/.git/HEAD");
-                var branch = content[(content.LastIndexOf('/') + 1)..^1];
-                var outstr = project.PadRight(maxl - infos[i].wide, ' ');
+                var outstr = project.Path.PadRight(maxl - infos[i].wide, ' ');
                 //项目索引
                 var length = (int)MathF.Ceiling(MathF.Log10(projects.Length));
                 var idxstr = i.ToString().PadLeft(length, '0');
                 //输出项目
-                Console.WriteLine($"{outstr}\t[{idxstr}]({branch})");
+                Console.WriteLine($"{outstr}\t[{idxstr}]({project.Branch})");
             }
         }
 

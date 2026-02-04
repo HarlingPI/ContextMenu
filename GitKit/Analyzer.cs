@@ -15,11 +15,11 @@ namespace GitKit
     /// <remarks></remarks>
     public struct Analyzer
     {
-        public string[] FilteredProjects { get; set; }
+        public ProjectInfo[] FilteredProjects { get; set; }
         public uint Retry { get; set; }
         public char PostCmd { get; set; }
         public string[] Words { get; set; }
-        public Analyzer(string typein, string[] projects)
+        public Analyzer(string typein, ProjectInfo[] projects)
         {
             FilteredProjects = GetFilteredProjects(ref typein, projects);
             Retry = GetRetryCount(ref typein);
@@ -28,14 +28,14 @@ namespace GitKit
         }
 
         private static Regex fexp = new Regex(@"f:(?:\d+|\[\d+~\d+\])(?:,(?:\d+|\[\d+~\d+\]))*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static string[] GetFilteredProjects(ref string typein, string[] projects)
+        private static ProjectInfo[] GetFilteredProjects(ref string typein, ProjectInfo[] projects)
         {
             var match = fexp.Match(typein);
             if (match.Success)
             {
                 typein = fexp.Replace(typein, "");
                 var parts = match.Value[2..].Split(',');
-                var temp = new List<string>();
+                var temp = new List<ProjectInfo>();
                 for (int i = 0; i < parts.Length; i++)
                 {
                     var item = parts[i];
