@@ -57,7 +57,14 @@ namespace CustomTools.Tools
                     var newname = FileUtils.GetFileName(orgname, false);
 
                     //移除符合条件的部分
-                    newname = Regexs.Fixexp.Replace(newname, string.Empty);
+                    foreach (var item in Regexs.Fixexp
+                                               .Matches(newname)
+                                               .Select(m => m.Value))
+                    {
+                        //如果符合数字表达式，则不移除
+                        if (Regexs.Numexp.IsMatch(item[1..^1])) continue;
+                        newname = newname.Replace(item, string.Empty);
+                    }
                     //再移除配置文件中的内容
                     foreach (var item in fixes)
                     {
@@ -105,7 +112,7 @@ namespace CustomTools.Tools
                 Console.Write($"{srcpath.Replace(path, ".")}\t{newname}");
                 using (var scope = new ConsoleScope(renameable ? ConsoleColor.Green : ConsoleColor.Red))
                 {
-                    Console.WriteLine($"\t{renameable}");
+                    Console.WriteLine($"\t{renameable.ToString()[0]}");
                 }
                 //更新进度条
                 var counter = i + 1;
