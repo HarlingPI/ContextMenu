@@ -103,7 +103,17 @@ namespace GitKit
                         {
                             var info = new ProjectInfo();
                             int start = modules[i] + 1;
-                            while (info.IsEmpty)
+
+                            int end = 0;
+                            try
+                            {
+                                end = modules[i + 1];
+                            }
+                            catch
+                            {
+                                end = lines.Length - 1;
+                            }
+                            while (info.IsEmpty && start < end)
                             {
                                 var line = lines[start].Trim();
 
@@ -119,7 +129,7 @@ namespace GitKit
                                 }
                                 start++;
                             }
-                            yield return info;
+                            if (!info.IsEmpty) yield return info;
                         }
                         //如果有.gitmodules直接跳过
                         continue;

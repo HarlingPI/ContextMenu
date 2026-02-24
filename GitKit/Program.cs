@@ -98,7 +98,7 @@ namespace GitKit
         public static void InitProgram(string folder = null)
         {
 #if DEBUG
-            folder = "D:\\Projects\\ZWS3";
+            folder = "D:\\Projects\\PIToolKit";
 #endif
             Effects.ShowSpinner2Char("Searching", Task.Run(() =>
             {
