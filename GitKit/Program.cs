@@ -63,6 +63,7 @@ namespace GitKit
                     }
                     else
                     {
+                        typein = analyzer.Words.Join(" ");
                         //默认命令执行
                         if (analyzer.FilteredProjects.IsNullOrEmpty())
                         {
@@ -98,7 +99,7 @@ namespace GitKit
         public static void InitProgram(string folder = null)
         {
 #if DEBUG
-            folder = "D:\\Projects\\ZWS3\\ZWS.EditorProject\\Packages";
+            folder = "D:\\Projects\\PIToolKit\\ContextMenu";
 #endif
             Effects.ShowSpinner2Char("Searching", Task.Run(() =>
             {

@@ -1,5 +1,4 @@
 using ConsoleKit;
-using PIToolKit.Public.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -34,15 +33,16 @@ namespace GitKit
             var root = ExcuteGitCommand(folder, "rev-parse --show-toplevel", false);
             if (!root.StartsWith("fatal: not a git repository"))
             {
+                var path = root.Trim().Replace('/', '\\');
                 var info = new ProjectInfo()
                 {
-                    Path = root.Trim().Replace('/', '\\'),
+                    Path = path,
                     Branch = ExcuteGitCommand(folder, "rev-parse --abbrev-ref HEAD", false).Trim()
                 };
-                projects = new ProjectInfo[] { GetGitInfo(root.Trim().Replace('/', '\\')) }.Concat(projects).ToArray();
+                projects = new ProjectInfo[] { GetGitInfo(path) }.Concat(projects).ToArray();
             }
 
-            foreach (var item in projects)
+            foreach (var item in projects.DistinctBy(p => p.Path))
             {
                 yield return item;
             }
