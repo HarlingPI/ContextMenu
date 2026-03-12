@@ -30,20 +30,18 @@ namespace GitKit
         public static IEnumerable<ProjectInfo> FindProjects(string folder)
         {
             var projects = SearchGitProjects(folder);
-            //如果向下没有找到任何Git项目，则向上查找Git项目
-            if (projects.IsNullOrEmpty())
+            //向上查找Git项目
+            var root = ExcuteGitCommand(folder, "rev-parse --show-toplevel", false);
+            if (!root.StartsWith("fatal: not a git repository"))
             {
-                var root = ExcuteGitCommand(folder, "rev-parse --show-toplevel", false);
-                if (!root.StartsWith("fatal: not a git repository"))
+                var info = new ProjectInfo()
                 {
-                    var info = new ProjectInfo()
-                    {
-                        Path = root.Trim().Replace('/', '\\'),
-                        Branch = ExcuteGitCommand(folder, "rev-parse --abbrev-ref HEAD", false).Trim()
-                    };
-                    yield return GetGitInfo(root.Trim().Replace('/', '\\'));
-                }
+                    Path = root.Trim().Replace('/', '\\'),
+                    Branch = ExcuteGitCommand(folder, "rev-parse --abbrev-ref HEAD", false).Trim()
+                };
+                projects = new ProjectInfo[] { GetGitInfo(root.Trim().Replace('/', '\\')) }.Concat(projects).ToArray();
             }
+
             foreach (var item in projects)
             {
                 yield return item;

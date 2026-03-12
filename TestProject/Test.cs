@@ -29,17 +29,17 @@ namespace TestProject
         [TestMethod]
         public void FileUtilsTest()
         {
-            var folder = "D:/Projects/";
-            var projects = new List<string>();
-            var time = PublicUtility.ReckonTime(() =>
-            {
-                projects.AddRange(GitLib.SearchGitProjects(folder));
-            });
-            Console.WriteLine($"检索耗时：{time}ms,共{projects.Count}个项目");
-            for (int i = 0; i < projects.Count; i++)
-            {
-                Console.WriteLine(projects[i]);
-            }
+            //var folder = "D:/Projects/";
+            //var projects = new List<string>();
+            //var time = PublicUtility.ReckonTime(() =>
+            //{
+            //    projects.AddRange(GitLib.SearchGitProjects(folder));
+            //});
+            //Console.WriteLine($"检索耗时：{time}ms,共{projects.Count}个项目");
+            //for (int i = 0; i < projects.Count; i++)
+            //{
+            //    Console.WriteLine(projects[i]);
+            //}
         }
     }
 }
