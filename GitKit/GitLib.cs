@@ -30,16 +30,21 @@ namespace GitKit
         {
             var projects = SearchGitProjects(folder);
             //向上查找Git项目
-            var root = ExcuteGitCommand(folder, "rev-parse --show-toplevel", false);
+            var root = ExcuteGitCommand(folder, "rev-parse --show-cdup", false);
             if (!root.StartsWith("fatal: not a git repository"))
             {
+                root = Path.GetFullPath(root);
                 var path = root.Trim().Replace('/', '\\');
-                var info = new ProjectInfo()
+                if (path[^1] == '\\') path = PIToolKit.Public.Utils.FileUtils.GetDirectory(path);
+                if (projects != null && projects.Length > 0 && projects.All(p => p.Path != path))
                 {
-                    Path = path,
-                    Branch = ExcuteGitCommand(folder, "rev-parse --abbrev-ref HEAD", false).Trim()
-                };
-                projects = new ProjectInfo[] { GetGitInfo(path) }.Concat(projects).ToArray();
+                    var info = new ProjectInfo()
+                    {
+                        Path = path,
+                        Branch = ExcuteGitCommand(folder, "rev-parse --abbrev-ref HEAD", false).Trim()
+                    };
+                    projects = new ProjectInfo[] { GetGitInfo(path) }.Concat(projects).ToArray();
+                }
             }
 
             foreach (var item in projects.DistinctBy(p => p.Path))

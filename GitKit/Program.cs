@@ -99,7 +99,7 @@ namespace GitKit
         public static void InitProgram(string folder = null)
         {
 #if DEBUG
-            folder = "D:\\Projects\\PIToolKit\\ContextMenu";
+            folder = "D:\\Projects\\LMStudio";
 #endif
             Effects.ShowSpinner2Char("Searching", Task.Run(() =>
             {
