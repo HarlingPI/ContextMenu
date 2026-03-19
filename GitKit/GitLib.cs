@@ -36,7 +36,7 @@ namespace GitKit
                 root = Path.GetFullPath(root);
                 var path = root.Trim().Replace('/', '\\');
                 if (path[^1] == '\\') path = PIToolKit.Public.Utils.FileUtils.GetDirectory(path);
-                if (projects != null && projects.Length > 0 && projects.All(p => p.Path != path))
+                if (projects.All(p => p.Path != path))
                 {
                     var info = new ProjectInfo()
                     {

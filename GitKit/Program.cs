@@ -99,7 +99,7 @@ namespace GitKit
         public static void InitProgram(string folder = null)
         {
 #if DEBUG
-            folder = "D:\\Projects\\LMStudio";
+            folder = "D:\\Projects\\ZWS3\\ZWS.EditorProject\\Assets\\ZWS_UI";
 #endif
             Effects.ShowSpinner2Char("Searching", Task.Run(() =>
             {
