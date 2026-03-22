@@ -16,10 +16,10 @@ namespace CustomTools.Tools
     /// 备注:   此文件通过PIToolKit模板创建
     /// </summary>
     /// <remarks></remarks>
-    [MenuItem("名称清理", 2, Catgray.File)]
+    [MenuItem("名称清理", 4, Catgray.File)]
     public class Rename : ITool
     {
-        private const string path = "Configs/.rename";
+        public const string path = "Configs/.rename";
         private readonly HashSet<string> fixes;
         public Rename()
         {
@@ -63,6 +63,13 @@ namespace CustomTools.Tools
                     {
                         //如果符合数字表达式，则不移除
                         if (Regexs.Numexp.IsMatch(item[1..^1])) continue;
+                        newname = newname.Replace(item, string.Empty);
+                    }
+                    //移除IDM的后缀
+                    foreach (var item in Regexs.IDMmark
+                                               .Matches(newname)
+                                               .Select(m => m.Value))
+                    {
                         newname = newname.Replace(item, string.Empty);
                     }
                     //再移除配置文件中的内容
