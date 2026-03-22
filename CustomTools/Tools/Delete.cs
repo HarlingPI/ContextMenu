@@ -76,7 +76,7 @@ namespace CustomTools.Tools
                 var (key, files) = groups[i];
                 //清除上一次的进度信息
                 Ansi.ClearCurtLine();
-                Console.WriteLine(key);
+                Console.WriteLine(key.Item1);
                 //更新进度条
                 Console.Write($"任务进度:{Effects.ProgressBar(40, (i + 1f) / groups.Length)}({(i + 1)}/{groups.Length})");
                 for (int j = 1; j < files.Length; j++)
