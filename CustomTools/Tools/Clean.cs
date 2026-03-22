@@ -17,7 +17,7 @@ namespace CustomTools.Tools
     /// 备注:   此文件通过PIToolKit模板创建
     /// </summary>
     /// <remarks>清理</remarks>
-    [MenuItem("文件清理", 2, Catgray.File)]
+    [MenuItem("文件夹清理", 2, Catgray.File)]
     public class Clean : ITool
     {
         public void Process(string path)

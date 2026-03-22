@@ -16,14 +16,14 @@ namespace CustomTools
     public static class Regexs
     {
         public static readonly Regex Fixexp = new Regex(@"[〖【({\[][\u0391-\u03A9\u03B1-\u03C9\u4E00-\u9FA5ぁ-ゔ\u30A1-\u30FFA-Za-z0-9ａ-ｚＡ-Ｚ０-９_.· -@🔞_Δ～〜♂♀=*●★（）。]+[\]})】〗]", RegexOptions.Compiled);
-        public static Regex avexp = new Regex(@"\(Av\d{9},P\d+\)", RegexOptions.Compiled);
+        public static Regex bilibiliexp = new Regex(@"\(Av\d{9},P\d+\)", RegexOptions.Compiled);
         public static Regex expisod = new Regex(@"\[\d{2}\]", RegexOptions.Compiled);
 
         public static Regex Numexp = new Regex("^[零一二三四五六七八九十百千万亿\\d]+$", RegexOptions.Compiled);
         /// <summary>
         /// IDM重复文件标记
         /// </summary>
-        public static Regex idmmark = new Regex("_[1-9]+$", RegexOptions.Compiled);
+        public static Regex IDMmark = new Regex("_[1-9]+$", RegexOptions.Compiled);
 
         private static readonly Dictionary<string, string> chinese = new Dictionary<string, string>
         {
