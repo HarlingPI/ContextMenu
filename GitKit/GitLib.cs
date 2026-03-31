@@ -43,7 +43,7 @@ namespace GitKit
                         Path = path,
                         Branch = ExcuteGitCommand(folder, "rev-parse --abbrev-ref HEAD", false).Trim()
                     };
-                    projects = new ProjectInfo[] { GetGitInfo(path) }.Concat(projects).ToArray();
+                    projects = [info, .. projects];
                 }
             }
 
@@ -69,7 +69,7 @@ namespace GitKit
             {
                 var folder = queue.Dequeue();
                 //查找是否是.git目录
-                if (folder.EndsWith("\\.git", StringComparison.OrdinalIgnoreCase))
+                if (folder.EndsWith("\\.git", StringComparison.OrdinalIgnoreCase) && !File.Exists(folder))
                 {
                     yield return GetGitInfo(Path.GetDirectoryName(folder));
                     continue;
