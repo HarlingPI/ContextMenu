@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 
+#region 由Codex添加
+using PIToolKit.Pool;
+#endregion
+
 namespace CustomTools.Tools
 {
     /// <summary>
@@ -100,7 +104,14 @@ namespace CustomTools.Tools
         private Dictionary<string, List<string>> ClassifyFiles(string[] files, string[] folders, string[] pathparts)
         {
             var groups = new Dictionary<string, List<string>>();
-            var foldernames = folders.ToDictionary(FileUtils.GetFolderName, f => f);
+
+            // 由Codex修改：使用池化字典缓存文件夹名称，减少分类过程中的临时字典分配
+            using var foldernames = new PooledDictionary<string, string>();
+            for (int fi = 0; fi < folders.Length; fi++)
+            {
+                foldernames.Add(FileUtils.GetFolderName(folders[fi]), folders[fi]);
+            }
+
             for (int i = 0; i < files.Length; i++)
             {
                 var file = files[i];

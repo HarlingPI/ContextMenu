@@ -9,6 +9,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+#region 由Codex添加
+using PIToolKit.Pool;
+#endregion
+
 namespace GitKit
 {
     /// <summary>
@@ -63,7 +67,9 @@ namespace GitKit
         private static IEnumerable<ProjectInfo> SearchGitProjectsInternal(string path)
         {
             if (!Directory.Exists(path)) yield break;
-            var queue = new Queue<string>();
+
+            // 由Codex修改：使用池化队列复用扫描队列，减少启动扫描时的临时分配
+            using var queue = new PooledQueue<string>();
             queue.Enqueue(path);
             while (queue.Count > 0)
             {
@@ -98,11 +104,18 @@ namespace GitKit
                     {
                         yield return GetGitInfo(folder);
                         var lines = File.ReadAllLines(file);
-                        var modules = lines.Select((l, i) => new { Line = l.Trim(), Index = i })
-                            .Where(x => x.Line.StartsWith("[submodule"))
-                            .Select(x => x.Index)
-                            .ToArray();
-                        for (int i = 0; i < modules.Length; i++)
+
+                        // 由Codex修改：使用池化列表收集子模块起始行，避免临时数组和LINQ中间分配
+                        using var modules = new PooledList<int>();
+                        for (int li = 0; li < lines.Length; li++)
+                        {
+                            if (lines[li].Trim().StartsWith("[submodule"))
+                            {
+                                modules.Add(li);
+                            }
+                        }
+
+                        for (int i = 0; i < modules.Count; i++)
                         {
                             var info = new ProjectInfo();
                             int start = modules[i] + 1;

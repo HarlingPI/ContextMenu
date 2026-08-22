@@ -8,6 +8,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
+#region 由Codex添加
+using PIToolKit.Pool;
+#endregion
+
 namespace CustomTools.Tools
 {
     /// <summary>
@@ -38,8 +42,14 @@ namespace CustomTools.Tools
             //查找文件夹下的所有同名文件
             var search = Task.Run(() =>
             {
-                var files = FileUtils.SearchFiles(path).ToArray();
-                return files.GroupBy(f =>
+
+                // 由Codex修改：使用池化列表缓存待处理文件，减少临时数组分配
+                using var files = new PooledList<string>();
+                foreach (var item in FileUtils.SearchFiles(path))
+                {
+                    files.Add(item);
+                }
+                return files.Body.GroupBy(f =>
                 {
                     var file = FileUtils.GetFileName(f, false);
                     var ext = FileUtils.GetExtension(f);

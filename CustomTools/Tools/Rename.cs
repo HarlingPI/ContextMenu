@@ -8,6 +8,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+#region 由Codex添加
+using PIToolKit.Pool;
+#endregion
+
 namespace CustomTools.Tools
 {
     /// <summary>
@@ -49,44 +53,47 @@ namespace CustomTools.Tools
         }
         private (string file, string newname)[] SearchFile(string path)
         {
-            return FileUtils.SearchFiles(path)
-                .Select(f =>
+
+            // 由Codex修改：使用池化列表收集重命名结果，减少LINQ中间数组分配
+            using var result = new PooledList<(string file, string newname)>();
+            foreach (var f in FileUtils.SearchFiles(path))
+            {
+                var orgname = FileUtils.GetFileName(f);
+                var ext = FileUtils.GetExtension(orgname);
+                var newname = FileUtils.GetFileName(orgname, false);
+
+                //移除符合条件的部分
+                foreach (var item in Regexs.Fixexp
+                                           .Matches(newname)
+                                           .Select(m => m.Value))
                 {
-                    var orgname = FileUtils.GetFileName(f);
-                    var ext = FileUtils.GetExtension(orgname);
-                    var newname = FileUtils.GetFileName(orgname, false);
+                    //如果符合数字表达式，则不移除
+                    if (Regexs.Numexp.IsMatch(item[1..^1])) continue;
+                    newname = newname.Replace(item, string.Empty);
+                }
+                //移除IDM的后缀
+                foreach (var item in Regexs.IDMmark
+                                           .Matches(newname)
+                                           .Select(m => m.Value))
+                {
+                    newname = newname.Replace(item, string.Empty);
+                }
+                //再移除配置文件中的内容
+                foreach (var item in fixes)
+                {
+                    newname = newname.Replace(item, string.Empty);
+                }
+                //移除前后的空格
+                newname = newname.Trim();
+                //拼接后缀名
+                newname += ext;
 
-                    //移除符合条件的部分
-                    foreach (var item in Regexs.Fixexp
-                                               .Matches(newname)
-                                               .Select(m => m.Value))
-                    {
-                        //如果符合数字表达式，则不移除
-                        if (Regexs.Numexp.IsMatch(item[1..^1])) continue;
-                        newname = newname.Replace(item, string.Empty);
-                    }
-                    //移除IDM的后缀
-                    foreach (var item in Regexs.IDMmark
-                                               .Matches(newname)
-                                               .Select(m => m.Value))
-                    {
-                        newname = newname.Replace(item, string.Empty);
-                    }
-                    //再移除配置文件中的内容
-                    foreach (var item in fixes)
-                    {
-                        newname = newname.Replace(item, string.Empty);
-                    }
-                    //移除前后的空格
-                    newname = newname.Trim();
-                    //拼接后缀名
-                    newname += ext;
-
-                    return (file: f, orgname, newname);
-                })
-                .Where(t => t.orgname != t.newname)
-                .Select(t => (t.file, t.newname))
-                .ToArray();
+                if (orgname != newname)
+                {
+                    result.Add((f, newname));
+                }
+            }
+            return result.ToArray();
         }
         private static void RenameFiles(string path, (string file, string newname)[] files)
         {

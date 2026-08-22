@@ -9,6 +9,10 @@ using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 
+#region 由Codex添加
+using PIToolKit.Pool;
+#endregion
+
 namespace GitKit
 {
     internal static class Program
@@ -59,7 +63,14 @@ namespace GitKit
                     var cmdname = analyzer.Words[0];
                     if (allcmds.TryGetValue(cmdname.ToLower(), out var command))
                     {
-                        command.Excute(analyzer.FilteredProjects.Select(p => p.Path).ToArray(), analyzer.Retry, analyzer.Words[1..]);
+                        // 由Codex修改：使用池化列表构建项目路径数组，减少每次命令执行的临时分配
+                        using var paths = new PooledList<string>(analyzer.FilteredProjects.Length);
+                        for (int i = 0; i < analyzer.FilteredProjects.Length; i++)
+                        {
+                            paths.Add(analyzer.FilteredProjects[i].Path);
+                        }
+
+                        command.Excute(paths.ToArray(), analyzer.Retry, analyzer.Words[1..]);
                     }
                     else
                     {
@@ -99,7 +110,7 @@ namespace GitKit
         public static void InitProgram(string folder = null)
         {
 #if DEBUG
-            folder = "D:\\Projects\\ZWS3\\ZWS.EditorProject\\Packages\\DLC005";
+            folder = "D:\\Projects\\PIToolKit\\ContextMenu";
 #endif
             Effects.ShowSpinner2Char("Searching", Task.Run(() =>
             {

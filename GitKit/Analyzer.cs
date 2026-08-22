@@ -5,6 +5,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+#region 由Codex添加
+using PIToolKit.Pool;
+#endregion
+
 namespace GitKit
 {
     /// <summary>
@@ -35,7 +39,9 @@ namespace GitKit
             {
                 typein = fexp.Replace(typein, "");
                 var parts = match.Value[2..].Split(',');
-                var temp = new List<ProjectInfo>();
+
+                // 由Codex修改：使用池化列表收集筛选结果，减少每次命令解析的临时分配
+                using var temp = new PooledList<ProjectInfo>();
                 for (int i = 0; i < parts.Length; i++)
                 {
                     var item = parts[i];
@@ -97,11 +103,19 @@ namespace GitKit
         private static Regex splitexp = new Regex(@"(\""[^\""]*\"")|(\S+)", RegexOptions.Compiled);
         private static string[] SplitCommand(string command)
         {
-            return splitexp
-                .Split(command)
-                .Select(w => w.Trim())
-                .Where(w => !string.IsNullOrEmpty(w))
-                .ToArray();
+
+            // 由Codex修改：使用池化列表收集命令词，减少正则分割后的中间数组分配
+            using var words = new PooledList<string>();
+            foreach (var word in splitexp.Split(command))
+            {
+                var trim = word.Trim();
+                if (!string.IsNullOrEmpty(trim))
+                {
+                    words.Add(trim);
+                }
+            }
+
+            return words.ToArray();
         }
     }
 }
