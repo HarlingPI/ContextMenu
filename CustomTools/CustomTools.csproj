@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 		<ApplicationIcon>Resources\Main.ico</ApplicationIcon>
 		<!-- 版本信息配置 -->
-		<FileVersion>1.12.21</FileVersion>
+		<FileVersion>1.12.22</FileVersion>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>
@@ -15,6 +15,8 @@
 		<Content Include="Resources\Delete.ico" />
 		<Content Include="Resources\Config.ico" />
 		<Content Include="Resources\Unins.ico" />
+		<!-- 由 Codex 添加 -->
+		<Content Include="Resources\VideoCheck.ico" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\..\NotNet\ConsoleKit\ConsoleKit.csproj" />

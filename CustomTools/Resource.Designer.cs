@@ -129,5 +129,19 @@ namespace CustomTools {
                 return ((byte[])(obj));
             }
         }
+
+        #region 由 Codex 添加
+
+        /// <summary>
+        ///   查找 System.Byte[] 类型的本地化资源。
+        /// </summary>
+        internal static byte[] VideoCheck {
+            get {
+                object obj = ResourceManager.GetObject("VideoCheck", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+
+        #endregion
     }
 }

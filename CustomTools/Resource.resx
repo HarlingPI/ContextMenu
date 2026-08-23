@@ -139,4 +139,8 @@
   <data name="Unins" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Unins.ico;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <!-- 由 Codex 添加 -->
+  <data name="VideoCheck" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\VideoCheck.ico;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>
