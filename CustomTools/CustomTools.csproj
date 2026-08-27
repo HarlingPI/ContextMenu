@@ -36,10 +36,7 @@
 	  </EmbeddedResource>
 	</ItemGroup>
 	<ItemGroup>
-	  <None Update="Configs\.rename">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Configs\.classify">
+	  <None Update="Configs\config.xml">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>

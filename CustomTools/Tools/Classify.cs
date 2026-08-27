@@ -6,8 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Serialization;
 
 #region 由Codex添加
 using PIToolKit.Pool;
@@ -24,11 +22,13 @@ namespace CustomTools.Tools
     [MenuItem("文件归类", 0, Catgray.File)]
     public class Classify : ITool
     {
-        private const string path = "Configs/.classify";
-        private readonly Config config = null;
+        private readonly ToolsConfig config;
+
         public Classify()
         {
-            config = ReadConfig(path);
+
+            // 由Codex修改：从统一的配置文件读取分类规则
+            config = ToolsConfig.Load();
         }
 
 
@@ -164,66 +164,6 @@ namespace CustomTools.Tools
                 list.Add(name);
             }
             return groups;
-        }
-        private static void SaveConfig(string path, Config config)
-        {
-            var doc = new XmlDocument();
-            var root = doc.CreateElement("Config");
-            doc.AppendChild(root);
-
-            var ignores = root.CreateChild("Ignores");
-            foreach (var item in config.Ignores)
-            {
-                ignores.CreateChild("Item").CreateAttribute("V").Value = item;
-            }
-
-            var mapper = root.CreateChild("Mapper");
-            foreach (var kvp in config.Mapper)
-            {
-                var item = mapper.CreateChild("Item");
-                item.CreateAttribute("K").Value = kvp.Key;
-                item.CreateAttribute("V").Value = kvp.Value;
-            }
-
-            doc.Save(path);
-        }
-        private static Config ReadConfig(string path)
-        {
-            var config = new Config();
-
-            if (FileUtils.FileIsExist(path))
-            {
-                var temp = new XmlDocument();
-                temp.Load(path);
-
-                var root = temp.DocumentElement;
-
-                var ignores = root.SelectSingleNode("./Ignores");
-                if (ignores != null)
-                {
-                    foreach (XmlNode item in ignores.ChildNodes)
-                    {
-                        config.Ignores.Add(item.Attributes["V"].Value);
-                    }
-                }
-
-                var mapper = root.SelectSingleNode("./Mapper");
-                if (mapper != null)
-                {
-                    foreach (XmlNode item in mapper.ChildNodes)
-                    {
-                        config.Mapper.TryAdd(item.Attributes["K"].Value, item.Attributes["V"].Value);
-                    }
-                }
-            }
-
-            return config;
-        }
-        private class Config
-        {
-            public List<string> Ignores = new List<string>();
-
-            public Dictionary<string, string> Mapper = new Dictionary<string, string>();
         }
     }
 }

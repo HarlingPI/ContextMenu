@@ -23,19 +23,13 @@ namespace CustomTools.Tools
     [MenuItem("文件清理", 3, Catgray.File)]
     public class Delete : ITool
     {
-        public const string path = "Configs/.rename";
         private readonly HashSet<string> fixes;
+
         public Delete()
         {
-            fixes = new HashSet<string>();
-            var array = FileUtils.ReadAllLines(path);
-            if (array.NotNullOrEmpty())
-            {
-                foreach (var item in array)
-                {
-                    fixes.Add(item);
-                }
-            }
+
+            // 由Codex修改：从统一的配置文件读取清理关键词
+            fixes = new HashSet<string>(ToolsConfig.Load().Fixes);
         }
         public void Process(string path)
         {
