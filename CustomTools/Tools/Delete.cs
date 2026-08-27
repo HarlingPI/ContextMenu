@@ -7,10 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
-#region 由Codex添加
 using PIToolKit.Pool;
-#endregion
 
 namespace CustomTools.Tools
 {
@@ -29,7 +26,7 @@ namespace CustomTools.Tools
         {
 
             // 由Codex修改：从统一的配置文件读取清理关键词
-            fixes = new HashSet<string>(ToolsConfig.Load().Fixes);
+            fixes = new HashSet<string>(ToolsConfig.LoadFixes().Fixes);
         }
         public void Process(string path)
         {

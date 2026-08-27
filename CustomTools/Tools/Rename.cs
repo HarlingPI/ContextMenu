@@ -7,10 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
-#region 由Codex添加
 using PIToolKit.Pool;
-#endregion
+using System.Xml;
 
 namespace CustomTools.Tools
 {
@@ -29,7 +27,7 @@ namespace CustomTools.Tools
         {
 
             // 由Codex修改：从统一的配置文件读取重命名关键词
-            fixes = new HashSet<string>(ToolsConfig.Load().Fixes);
+            fixes = new HashSet<string>(ToolsConfig.LoadFixes().Fixes);
         }
 
         public void Process(string path)
@@ -129,4 +127,47 @@ namespace CustomTools.Tools
             Ansi.ShowCursor();
         }
     }
+    #region 由Codex添加
+    /// <summary>
+    /// 重命名工具对应的配置分区
+    /// </summary>
+    public sealed partial class ToolsConfig
+    {
+        public List<string> Fixes = new List<string>();
+
+        public static ToolsConfig LoadFixes()
+        {
+            var config = new ToolsConfig();
+            if (!FileUtils.FileIsExist(ConfigPath))
+            {
+                return config;
+            }
+
+            var doc = new XmlDocument();
+            doc.Load(ConfigPath);
+            var root = doc.DocumentElement;
+            if (root == null)
+            {
+                return config;
+            }
+
+            var fixes = root.SelectSingleNode("./Fixes");
+            if (fixes == null)
+            {
+                return config;
+            }
+
+            foreach (XmlNode item in fixes.ChildNodes)
+            {
+                var value = item.Attributes?["V"]?.Value;
+                if (value != null)
+                {
+                    config.Fixes.Add(value);
+                }
+            }
+
+            return config;
+        }
+    }
+    #endregion
 }
