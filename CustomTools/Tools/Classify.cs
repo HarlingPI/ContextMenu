@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 using PIToolKit.Pool;
-using System.Xml;
 
 namespace CustomTools.Tools
 {
@@ -175,51 +174,36 @@ namespace CustomTools.Tools
         public List<string> Ignores = new List<string>();
         public Dictionary<string, string> Mapper = new Dictionary<string, string>();
 
+        // 由Codex修改：改为解析扁平配置中的 classify 条目
         public static ToolsConfig LoadClassify()
         {
             var config = new ToolsConfig();
-            if (!FileUtils.FileIsExist(ConfigPath))
+            var lines = FileUtils.ReadAllLines(ConfigPath);
+            if (lines == null)
             {
                 return config;
             }
 
-            var doc = new XmlDocument();
-            doc.Load(ConfigPath);
-            var root = doc.DocumentElement;
-            if (root == null)
+            foreach (var line in lines)
             {
-                return config;
-            }
-
-            var classify = root.SelectSingleNode("./Classify");
-            if (classify == null)
-            {
-                return config;
-            }
-
-            var ignores = classify.SelectSingleNode("./Ignores");
-            if (ignores != null)
-            {
-                foreach (XmlNode item in ignores.ChildNodes)
+                var index = line.IndexOf(" = ", StringComparison.Ordinal);
+                if (index < 0)
                 {
-                    var value = item.Attributes?["V"]?.Value;
-                    if (value != null)
-                    {
-                        config.Ignores.Add(value);
-                    }
+                    continue;
                 }
-            }
 
-            var mapper = classify.SelectSingleNode("./Mapper");
-            if (mapper != null)
-            {
-                foreach (XmlNode item in mapper.ChildNodes)
+                var key = line[..index].Trim();
+                var value = line[(index + 3)..];
+                if (key == "classify.ignore")
                 {
-                    var key = item.Attributes?["K"]?.Value;
-                    var value = item.Attributes?["V"]?.Value;
-                    if (key != null && value != null)
+                    config.Ignores.Add(value);
+                }
+                else if (key == "classify.map")
+                {
+                    var sep = value.IndexOf(" | ", StringComparison.Ordinal);
+                    if (sep >= 0)
                     {
-                        config.Mapper.TryAdd(key, value);
+                        config.Mapper.TryAdd(value[..sep], value[(sep + 3)..]);
                     }
                 }
             }

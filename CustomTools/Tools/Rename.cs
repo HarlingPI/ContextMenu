@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using PIToolKit.Pool;
-using System.Xml;
 
 namespace CustomTools.Tools
 {
@@ -135,34 +134,27 @@ namespace CustomTools.Tools
     {
         public List<string> Fixes = new List<string>();
 
+        // 由Codex修改：改为解析扁平配置中的 fix 条目
         public static ToolsConfig LoadFixes()
         {
             var config = new ToolsConfig();
-            if (!FileUtils.FileIsExist(ConfigPath))
+            var lines = FileUtils.ReadAllLines(ConfigPath);
+            if (lines == null)
             {
                 return config;
             }
 
-            var doc = new XmlDocument();
-            doc.Load(ConfigPath);
-            var root = doc.DocumentElement;
-            if (root == null)
+            foreach (var line in lines)
             {
-                return config;
-            }
-
-            var fixes = root.SelectSingleNode("./Fixes");
-            if (fixes == null)
-            {
-                return config;
-            }
-
-            foreach (XmlNode item in fixes.ChildNodes)
-            {
-                var value = item.Attributes?["V"]?.Value;
-                if (value != null)
+                var index = line.IndexOf(" = ", StringComparison.Ordinal);
+                if (index < 0)
                 {
-                    config.Fixes.Add(value);
+                    continue;
+                }
+
+                if (line[..index].Trim() == "fix")
+                {
+                    config.Fixes.Add(line[(index + 3)..]);
                 }
             }
 

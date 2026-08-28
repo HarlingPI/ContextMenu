@@ -7,6 +7,7 @@ namespace CustomTools.Tools
     /// </summary>
     public sealed partial class ToolsConfig
     {
-        public const string ConfigPath = "Configs/config.xml";
+        // 由Codex修改：配置文件切换为扁平格式
+        public const string ConfigPath = "Configs/config.cfg";
     }
 }
