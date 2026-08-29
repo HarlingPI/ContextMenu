@@ -26,19 +26,10 @@ namespace CustomTools.Tools
         private readonly double[,] cosTable = CreateCosTable();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public byte[] ComputeHash(byte[] rgba)
+        public byte[] ComputeHash(byte[] gray)
         {
-            // 将 RGBA 帧转换为灰度图
-            for (int y = 0; y < FeatureSize; y++)
-            {
-                int rowBase = y * FeatureSize;
-                for (int x = 0; x < FeatureSize; x++)
-                {
-                    int offset = (rowBase + x) * 4;
-                    byte gray = (byte)(rgba[offset] * 0.299 + rgba[offset + 1] * 0.587 + rgba[offset + 2] * 0.114);
-                    grayData[rowBase + x] = gray;
-                }
-            }
+            // ffmpeg 已输出 32x32 灰度帧，直接拷贝即可
+            Buffer.BlockCopy(gray, 0, grayData, 0, grayData.Length);
 
             // 行方向 DCT
             for (int y = 0; y < FeatureSize; y++)

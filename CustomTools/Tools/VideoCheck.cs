@@ -27,16 +27,18 @@ namespace CustomTools.Tools
             ".m4v", ".mpg", ".mpeg", ".ts", ".mts", ".3gp", ".ogv", ".vob"
         };
 
-        private const int FrameSize = 32 * 32 * 4;
+        private const int FrameSize = 32 * 32;
         private const double CropRatio = 0.15;
 
         private readonly int frameCount;
         private readonly int threshold;
         private readonly double durationTolerance;
         private readonly int parallelism;
+        private readonly string hwaccel;
         private readonly string ffmpegPath;
         private readonly string ffprobePath;
         private readonly object consoleLock = new object();
+        private int hwaccelFallbackReported;
 
         public VideoCheck()
         {
@@ -45,6 +47,7 @@ namespace CustomTools.Tools
             threshold = config.VideoThreshold;
             durationTolerance = config.VideoDurationTolerance;
             parallelism = config.VideoParallelism;
+            hwaccel = config.VideoHardwareAccel;
 
             var baseDir = AppContext.BaseDirectory;
             ffmpegPath = Path.Combine(baseDir, "FFmpeg", "ffmpeg.exe");
@@ -234,10 +237,31 @@ namespace CustomTools.Tools
 
         private List<byte[]> ComputePhashes(string file)
         {
+            if (hwaccel.Equals("none", StringComparison.OrdinalIgnoreCase))
+            {
+                return ExtractPhashes(file, "none");
+            }
+
+            try
+            {
+                return ExtractPhashes(file, hwaccel);
+            }
+            catch
+            {
+                // 硬件解码失败时回退到 CPU 解码
+                var cpuHashes = ExtractPhashes(file, "none");
+                ReportHardwareFallback();
+                return cpuHashes;
+            }
+        }
+
+        private List<byte[]> ExtractPhashes(string file, string accel)
+        {
             var outputRate = frameCount + 1;
             var crop = $"crop=iw-2*round(iw*{CropRatio}):ih-2*round(ih*{CropRatio}):round(iw*{CropRatio}):round(ih*{CropRatio})";
-            var filter = $"fps={outputRate},select='not(eq(mod(n,{outputRate}),0))',{crop},scale=32:32:flags=bilinear";
-            var arguments = $"-hide_banner -loglevel error -nostdin -i \"{file}\" -vf \"{filter}\" -an -fps_mode vfr -pix_fmt rgba -f rawvideo -";
+            var filter = $"fps={outputRate},select='not(eq(mod(n,{outputRate}),0))',format=gray,{crop},scale=32:32:flags=bilinear";
+            var accelArg = accel.Equals("none", StringComparison.OrdinalIgnoreCase) ? string.Empty : $"-hwaccel {accel} ";
+            var arguments = $"-hide_banner -loglevel error -nostdin {accelArg}-i \"{file}\" -vf \"{filter}\" -an -fps_mode vfr -pix_fmt gray -f rawvideo -";
 
             using var process = StartProcess(ffmpegPath, arguments);
             var errorTask = process.StandardError.ReadToEndAsync();
@@ -281,6 +305,16 @@ namespace CustomTools.Tools
             }
 
             return hashes;
+        }
+
+        private void ReportHardwareFallback()
+        {
+            // 只提示一次，避免并行场景刷屏
+            if (Interlocked.CompareExchange(ref hwaccelFallbackReported, 1, 0) != 0)
+            {
+                return;
+            }
+            Console.WriteLine("硬件解码不可用，已自动回退 CPU 解码");
         }
 
         private List<VideoGroup> MatchGroups(VideoResult[] items)
@@ -469,8 +503,9 @@ namespace CustomTools.Tools
     {
         public int VideoFrameCount = 2;
         public int VideoThreshold = 30;
-        public double VideoDurationTolerance = 20;
+        public double VideoDurationTolerance = 10;
         public int VideoParallelism = 4;
+        public string VideoHardwareAccel = "none";
 
         public static ToolsConfig LoadVideoCheck()
         {
@@ -502,6 +537,10 @@ namespace CustomTools.Tools
                 else if (key == "video.parallelism" && int.TryParse(value, out var parallelism) && parallelism > 0)
                 {
                     config.VideoParallelism = parallelism;
+                }
+                else if (key == "video.hwaccel" && value.Length > 0)
+                {
+                    config.VideoHardwareAccel = value;
                 }
                 else if (key == "video.durationTolerance" &&
                     double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var tolerance) && tolerance >= 0)
