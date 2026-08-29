@@ -142,6 +142,16 @@ namespace CustomTools {
             }
         }
 
+        /// <summary>
+        ///   查找 System.Byte[] 类型的本地化资源。
+        /// </summary>
+        internal static byte[] Settings {
+            get {
+                object obj = ResourceManager.GetObject("Settings", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+
         #endregion
     }
 }

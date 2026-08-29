@@ -27,3 +27,5 @@ crashlytics-build.properties
 /Publish/Resources
 /Publish/Configs
 /CustomTools/FFmpeg
+/Publish/FFmpeg
+/CustomTools/Tools/VideoCheckWindow.resx

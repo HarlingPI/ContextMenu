@@ -1,12 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
+		<!-- 由 Codex 修改：启用 WinForms，切换到 Windows TFM -->
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWindowsForms>true</UseWindowsForms>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<ApplicationIcon>Resources\Main.ico</ApplicationIcon>
 		<!-- 版本信息配置 -->
-		<FileVersion>1.12.24</FileVersion>
+		<!-- 由 Codex 修改：新增 Settings 菜单项，提升版本号以触发注册表更新 -->
+		<FileVersion>1.12.33</FileVersion>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>
@@ -17,6 +20,8 @@
 		<Content Include="Resources\Unins.ico" />
 		<!-- 由 Codex 添加 -->
 		<Content Include="Resources\VideoCheck.ico" />
+		<!-- 由 Codex 添加 -->
+		<Content Include="Resources\Settings.ico" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\..\NotNet\ConsoleKit\ConsoleKit.csproj" />

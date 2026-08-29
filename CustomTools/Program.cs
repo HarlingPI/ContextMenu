@@ -36,6 +36,8 @@ namespace CustomTools
             Version = fileVersionAttr?.Version ?? "0.0.0";
         }
 
+        // 由 Codex 修改：WinForms 结果窗口需要 STA 线程
+        [STAThread]
         static void Main(string[] args)
         {
             Console.BufferHeight = 30000;
@@ -49,7 +51,7 @@ namespace CustomTools
             //args = new[] { "D:/InstallFolder/迅雷下载/新建文件夹/", "Flatten" };
             //args = new[] { @"C:\Users\Harling\Desktop\新建文件夹", "Clean" };
             //args = new[] { @"E:\视频\动漫\2D", "Rename" };
-            args = new[] { @"E:\视频\动漫\短篇", "Delete" };
+            args = new[] { @"D:\FFOutput\Temp\短片", "VideoCheck" };
 #endif
             if (args.IsNullOrEmpty())
             {

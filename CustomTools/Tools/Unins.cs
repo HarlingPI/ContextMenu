@@ -12,7 +12,7 @@ namespace CustomTools.Tools
     /// 备注:   此文件通过PIToolKit模板创建
     /// </summary>
     /// <remarks></remarks>
-    [MenuItem("卸载", 0, Catgray.Manage)]
+    [MenuItem("卸载", 1, Catgray.Manage)]
     public class Unins : ITool
     {
         public void Process(string path)
