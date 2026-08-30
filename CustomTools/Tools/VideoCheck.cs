@@ -81,16 +81,12 @@ namespace CustomTools.Tools
                 MaxDegreeOfParallelism = Math.Clamp(parallelism, 1, Environment.ProcessorCount)
             };
 
-            // 阶段1：只用 ffprobe 获取时长，先做候选视频初筛
+            // 阶段1a：仅获取时长
             var durations = new double[files.Length];
-            var ids = new byte[files.Length][];
-            var caches = LoadVideoCaches(files);
-            var dirtyDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             int probed = 0;
             var total = files.Length;
-
             Ansi.HideCursor();
-            Console.Write($"任务进度:{Effects.ProgressBar(40, 0)}(0/{total})");
+            Console.Write($"时长获取进度:{Effects.ProgressBar(40, 0)}(0/{total})");
             Parallel.For(0, total, parallelOptions, i =>
             {
                 try
@@ -101,6 +97,28 @@ namespace CustomTools.Tools
                 {
                     durations[i] = 0;
                 }
+
+                var current = Interlocked.Increment(ref probed);
+                lock (consoleLock)
+                {
+                    Ansi.ClearCurtLine();
+                    Console.Write($"时长获取进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total})");
+                }
+            });
+            Ansi.ClearCurtLine();
+            Console.Write($"时长获取进度:{Effects.ProgressBar(40, 1)}({total}/{total})");
+            Ansi.ShowCursor();
+            Console.WriteLine();
+
+            // 阶段1b：仅计算内容 ID
+            var ids = new byte[files.Length][];
+            var caches = LoadVideoCaches(files);
+            var dirtyDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            int idDone = 0;
+            Ansi.HideCursor();
+            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 0)}(0/{total})");
+            Parallel.For(0, total, parallelOptions, i =>
+            {
                 var directory = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
                 var dirCache = caches.TryGetValue(directory, out var loaded) ? loaded : null;
                 string signatureKey = string.Empty;
@@ -132,17 +150,17 @@ namespace CustomTools.Tools
                     }
                 }
 
-                var current = Interlocked.Increment(ref probed);
+                var current = Interlocked.Increment(ref idDone);
                 lock (consoleLock)
                 {
                     Ansi.ClearCurtLine();
-                    Console.Write($"任务进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total})");
+                    Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total})");
                 }
             });
             Ansi.ClearCurtLine();
-            Console.Write($"任务进度:{Effects.ProgressBar(40, 1)}({total}/{total})");
+            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 1)}({total}/{total})");
+            Ansi.ShowCursor();
             Console.WriteLine();
-            Console.WriteLine($"时长获取完成：{durations.Count(duration => duration > 0)}/{total}");
 
             // 阶段2：只有存在时长相近同伴的视频才需要计算 pHash
             var candidates = FilterDurationCandidates(durations);
@@ -180,7 +198,7 @@ namespace CustomTools.Tools
                 int computed = 0;
                 var computeTotal = toCompute.Count;
                 Ansi.HideCursor();
-                Console.Write($"任务进度:{Effects.ProgressBar(40, 0)}(0/{computeTotal})");
+                Console.Write($"pHash 进度:{Effects.ProgressBar(40, 0)}(0/{computeTotal})");
 
                 Parallel.For(0, computeTotal, parallelOptions, i =>
                 {
@@ -219,12 +237,12 @@ namespace CustomTools.Tools
                     lock (consoleLock)
                     {
                         Ansi.ClearCurtLine();
-                        Console.Write($"任务进度:{Effects.ProgressBar(40, current / (float)computeTotal)}({current}/{computeTotal})");
+                        Console.Write($"pHash 进度:{Effects.ProgressBar(40, current / (float)computeTotal)}({current}/{computeTotal})");
                     }
                 });
 
                 Ansi.ClearCurtLine();
-                Console.Write($"任务进度:{Effects.ProgressBar(40, 1)}({computeTotal}/{computeTotal})");
+                Console.Write($"pHash 进度:{Effects.ProgressBar(40, 1)}({computeTotal}/{computeTotal})");
                 Ansi.ShowCursor();
                 Console.WriteLine();
             }

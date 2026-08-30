@@ -66,6 +66,10 @@ namespace CustomTools.Tools
         private const string CacheFileName = ".phash.cache";
         private const int IdLength = 16;
         private const int HashLength = 32;
+        private const int HeadSize = 1024 * 1024;
+        private const int TailSize = 1024 * 1024;
+        private const int SampleSize = 64 * 1024;
+        private const long SampleInterval = 8L * 1024 * 1024;
         private static readonly byte[] Magic = { (byte)'V', (byte)'C', (byte)'H', (byte)'K' };
 
         public static string GetCachePath(string directory)
@@ -92,8 +96,44 @@ namespace CustomTools.Tools
         public static byte[] ComputeContentId(string file)
         {
             using var stream = File.OpenRead(file);
+            var size = stream.Length;
+            using var combined = new MemoryStream();
+            var sizeBytes = BitConverter.GetBytes(size);
+            combined.Write(sizeBytes, 0, sizeBytes.Length);
+
+            if (size <= HeadSize + TailSize)
+            {
+                var full = new byte[(int)size];
+                stream.Position = 0;
+                stream.ReadExactly(full);
+                combined.Write(full, 0, full.Length);
+            }
+            else
+            {
+                var head = new byte[HeadSize];
+                stream.Position = 0;
+                stream.ReadExactly(head);
+                combined.Write(head, 0, head.Length);
+
+                var tail = new byte[TailSize];
+                stream.Position = size - TailSize;
+                stream.ReadExactly(tail);
+                combined.Write(tail, 0, tail.Length);
+
+                long offset = HeadSize;
+                long tailStart = size - TailSize;
+                while (offset + SampleSize < tailStart)
+                {
+                    var sample = new byte[SampleSize];
+                    stream.Position = offset;
+                    stream.ReadExactly(sample);
+                    combined.Write(sample, 0, sample.Length);
+                    offset += SampleInterval;
+                }
+            }
+
             using var md5 = MD5.Create();
-            return md5.ComputeHash(stream);
+            return md5.ComputeHash(combined.ToArray());
         }
 
         public static DirectoryCache Load(string directory)
