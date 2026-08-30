@@ -38,6 +38,8 @@ namespace CustomTools.Tools
             treeView.Dock = DockStyle.Fill;
             treeView.HideSelection = false;
             treeView.CheckBoxes = true;
+            treeView.NodeMouseClick += TreeView_NodeMouseClick;
+            treeView.AfterSelect += TreeView_AfterSelect;
 
             var bottomPanel = new Panel
             {
@@ -148,8 +150,39 @@ namespace CustomTools.Tools
             // 没有任何分组时自动关闭窗口
             if (groups.Count == 0)
             {
-                DialogResult = DialogResult.OK;
+            DialogResult = DialogResult.OK;
+        }
+
+        }
+
+        private void TreeView_AfterSelect(object? sender, TreeViewEventArgs e)
+        {
+            // 选中分组时，默认勾选除第一个文件外的所有文件
+            if (e.Node != null && e.Node.Parent == null)
+            {
+                var nodes = e.Node.Nodes;
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    nodes[i].Checked = i > 0;
+                }
             }
+        }
+
+        private void TreeView_NodeMouseClick(object? sender, TreeNodeMouseClickEventArgs e)
+        {
+            // 单击文件名整行也能切换勾选；直接点方框时交给控件自身处理
+            if (e.Node?.Parent == null)
+            {
+                return;
+            }
+
+            var hit = treeView.HitTest(e.Location);
+            if ((hit.Location & TreeViewHitTestLocations.StateImage) != 0)
+            {
+                return;
+            }
+
+            e.Node.Checked = !e.Node.Checked;
         }
     }
 }

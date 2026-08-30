@@ -83,6 +83,9 @@ namespace CustomTools.Tools
 
             // 阶段1：只用 ffprobe 获取时长，先做候选视频初筛
             var durations = new double[files.Length];
+            var ids = new byte[files.Length][];
+            var caches = LoadVideoCaches(files);
+            var dirtyDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             int probed = 0;
             var total = files.Length;
 
@@ -92,11 +95,30 @@ namespace CustomTools.Tools
             {
                 try
                 {
-                    durations[i] = GetDuration(files[i]);
+                    ids[i] = VideoCheckCache.ComputeContentId(files[i]);
                 }
                 catch
                 {
-                    durations[i] = 0;
+                    ids[i] = Array.Empty<byte>();
+                }
+
+                var directory = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
+                var cache = caches.TryGetValue(directory, out var dirCache) ? dirCache : null;
+                var key = ids[i].Length > 0 ? VideoCheckCache.ToKey(ids[i]) : string.Empty;
+                if (cache != null && key.Length > 0 && cache.TryGetValue(key, out var entry) && entry.Duration > 0)
+                {
+                    durations[i] = entry.Duration;
+                }
+                else
+                {
+                    try
+                    {
+                        durations[i] = GetDuration(files[i]);
+                    }
+                    catch
+                    {
+                        durations[i] = 0;
+                    }
                 }
 
                 var current = Interlocked.Increment(ref probed);
@@ -116,51 +138,86 @@ namespace CustomTools.Tools
             Console.WriteLine($"时长初筛后需要计算 pHash 的视频：{candidates.Length}/{total}");
             if (candidates.Length < 2)
             {
+                UpdateCacheFiles(caches, ids, files, dirtyDirs);
                 MessageBox.Show("没有时长相近的视频，无法比较。", "视频查重", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 AutoCloseConsole();
                 return;
             }
 
-            // 阶段3：仅对候选视频并行计算 pHash
+            // 阶段3：先做缓存检查，命中直接复用，未命中才计算
             var results = new VideoResult?[candidates.Length];
-            int computed = 0;
-            var computeTotal = candidates.Length;
-            Ansi.HideCursor();
-            Console.Write($"任务进度:{Effects.ProgressBar(40, 0)}(0/{computeTotal})");
-
-            Parallel.For(0, computeTotal, parallelOptions, i =>
+            var toCompute = new List<int>();
+            for (int i = 0; i < candidates.Length; i++)
             {
                 var index = candidates[i];
-                try
+                var directory = Path.GetFullPath(Path.GetDirectoryName(files[index]) ?? ".");
+                var cache = caches.TryGetValue(directory, out var dirCache) ? dirCache : null;
+                var key = ids[index].Length > 0 ? VideoCheckCache.ToKey(ids[index]) : string.Empty;
+                if (cache != null && key.Length > 0 && cache.TryGetValue(key, out var entry) && entry.Hashes.Length > 0)
                 {
-                    var hashes = ComputePhashes(files[index]);
-                    if (hashes.Count == 0)
-                    {
-                        throw new InvalidOperationException("未能提取到有效帧");
-                    }
-                    results[i] = new VideoResult(files[index], durations[index], hashes.ToArray());
+                    results[i] = new VideoResult(files[index], durations[index], entry.Hashes);
                 }
-                catch (Exception ex)
+                else
                 {
+                    toCompute.Add(i);
+                }
+            }
+            Console.WriteLine($"缓存检查后实际需要计算 pHash 的视频：{toCompute.Count}/{candidates.Length}");
+
+            if (toCompute.Count > 0)
+            {
+                int computed = 0;
+                var computeTotal = toCompute.Count;
+                Ansi.HideCursor();
+                Console.Write($"任务进度:{Effects.ProgressBar(40, 0)}(0/{computeTotal})");
+
+                Parallel.For(0, computeTotal, parallelOptions, i =>
+                {
+                    var candidateIndex = toCompute[i];
+                    var index = candidates[candidateIndex];
+                    try
+                    {
+                        var frameHashes = ComputePhashes(files[index]);
+                        if (frameHashes.Count == 0)
+                        {
+                            throw new InvalidOperationException("未能提取到有效帧");
+                        }
+                        var hashes = frameHashes.ToArray();
+                        results[candidateIndex] = new VideoResult(files[index], durations[index], hashes);
+
+                        var directory = Path.GetFullPath(Path.GetDirectoryName(files[index]) ?? ".");
+                        var cache = caches.TryGetValue(directory, out var dirCache) ? dirCache : null;
+                        var key = ids[index].Length > 0 ? VideoCheckCache.ToKey(ids[index]) : string.Empty;
+                        if (cache != null && key.Length > 0)
+                        {
+                            cache[key] = new CacheEntry(ids[index], durations[index], hashes);
+                            dirtyDirs.Add(directory);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        lock (consoleLock)
+                        {
+                            Ansi.ClearCurtLine();
+                            Console.WriteLine($"处理失败：{Path.GetFileName(files[index])} {ex.Message}");
+                        }
+                    }
+
+                    var current = Interlocked.Increment(ref computed);
                     lock (consoleLock)
                     {
                         Ansi.ClearCurtLine();
-                        Console.WriteLine($"处理失败：{Path.GetFileName(files[index])} {ex.Message}");
+                        Console.Write($"任务进度:{Effects.ProgressBar(40, current / (float)computeTotal)}({current}/{computeTotal})");
                     }
-                }
+                });
 
-                var current = Interlocked.Increment(ref computed);
-                lock (consoleLock)
-                {
-                    Ansi.ClearCurtLine();
-                    Console.Write($"任务进度:{Effects.ProgressBar(40, current / (float)computeTotal)}({current}/{computeTotal})");
-                }
-            });
+                Ansi.ClearCurtLine();
+                Console.Write($"任务进度:{Effects.ProgressBar(40, 1)}({computeTotal}/{computeTotal})");
+                Ansi.ShowCursor();
+                Console.WriteLine();
+            }
 
-            Ansi.ClearCurtLine();
-            Console.Write($"任务进度:{Effects.ProgressBar(40, 1)}({computeTotal}/{computeTotal})");
-            Ansi.ShowCursor();
-            Console.WriteLine();
+            UpdateCacheFiles(caches, ids, files, dirtyDirs);
 
             var videos = results.Where(item => item != null).Cast<VideoResult>().ToArray();
             Console.WriteLine($"有效视频：{videos.Length}");
@@ -174,6 +231,73 @@ namespace CustomTools.Tools
             var groups = MatchGroups(videos);
             ShowResults(groups);
             AutoCloseConsole();
+        }
+
+        private static Dictionary<string, Dictionary<string, CacheEntry>> LoadVideoCaches(string[] files)
+        {
+            var caches = new Dictionary<string, Dictionary<string, CacheEntry>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var file in files)
+            {
+                var directory = Path.GetFullPath(Path.GetDirectoryName(file) ?? ".");
+                if (!caches.ContainsKey(directory))
+                {
+                    caches[directory] = VideoCheckCache.Load(directory);
+                }
+            }
+            return caches;
+        }
+
+        private void UpdateCacheFiles(
+            Dictionary<string, Dictionary<string, CacheEntry>> caches,
+            byte[][] ids,
+            string[] files,
+            HashSet<string> dirtyDirs)
+        {
+            foreach (var directory in caches.Keys.ToArray())
+            {
+                var cache = caches[directory];
+                var currentIds = new HashSet<string>(StringComparer.Ordinal);
+                for (int i = 0; i < files.Length; i++)
+                {
+                    var fileDir = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
+                    if (string.Equals(fileDir, directory, StringComparison.OrdinalIgnoreCase) && ids[i].Length > 0)
+                    {
+                        currentIds.Add(VideoCheckCache.ToKey(ids[i]));
+                    }
+                }
+
+                var removed = false;
+                foreach (var key in cache.Keys.ToArray())
+                {
+                    if (!currentIds.Contains(key))
+                    {
+                        cache.Remove(key);
+                        removed = true;
+                    }
+                }
+                if (removed)
+                {
+                    dirtyDirs.Add(directory);
+                }
+
+                if (!dirtyDirs.Contains(directory))
+                {
+                    continue;
+                }
+
+                if (cache.Count > 0)
+                {
+                    VideoCheckCache.Write(directory, cache.Values);
+                }
+                else
+                {
+                    var path = VideoCheckCache.GetCachePath(directory);
+                    if (File.Exists(path))
+                    {
+                        File.Delete(path);
+                    }
+                }
+            }
         }
 
         private int[] FilterDurationCandidates(double[] durations)
