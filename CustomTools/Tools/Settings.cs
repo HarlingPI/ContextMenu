@@ -29,14 +29,10 @@ namespace CustomTools.Tools
             OpenConfig(configPath);
         }
 
-        // 由 Codex 修改：.cfg 没有默认关联时改用记事本打开
+        // 由 Codex 修改：优先用 VSCode 打开，找不到再退回记事本
         private static void OpenConfig(string configPath)
         {
-            try
-            {
-                FileUtils.OpenPath(configPath);
-            }
-            catch
+            if (!TryOpenWithVSCode(configPath))
             {
                 var startInfo = new ProcessStartInfo("notepad.exe", $"\"{configPath}\"")
                 {
@@ -44,6 +40,43 @@ namespace CustomTools.Tools
                 };
                 System.Diagnostics.Process.Start(startInfo);
             }
+        }
+
+        private static bool TryOpenWithVSCode(string path)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new ProcessStartInfo("code.exe", $"\"{path}\"")
+                {
+                    UseShellExecute = true
+                });
+                return true;
+            }
+            catch
+            {
+                // 尝试常见安装目录
+            }
+
+            var programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            var candidates = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Microsoft VS Code", "Code.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft VS Code", "Code.exe"),
+                Path.Combine(programFilesX86, "Microsoft VS Code", "Code.exe")
+            };
+
+            foreach (var candidate in candidates)
+            {
+                if (File.Exists(candidate))
+                {
+                    System.Diagnostics.Process.Start(new ProcessStartInfo(candidate, $"\"{path}\"")
+                    {
+                        UseShellExecute = true
+                    });
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

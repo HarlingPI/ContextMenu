@@ -85,8 +85,9 @@ namespace CustomTools.Tools
             var durations = new double[files.Length];
             int probed = 0;
             var total = files.Length;
+            var phaseTimerDuration = Stopwatch.StartNew();
             Ansi.HideCursor();
-            Console.Write($"时长获取进度:{Effects.ProgressBar(40, 0)}(0/{total})");
+            Console.Write($"时长获取进度:{Effects.ProgressBar(40, 0)}(0/{total}) {BuildProgressTime(0, total, phaseTimerDuration.Elapsed)}");
             Parallel.For(0, total, parallelOptions, i =>
             {
                 try
@@ -102,11 +103,11 @@ namespace CustomTools.Tools
                 lock (consoleLock)
                 {
                     Ansi.ClearCurtLine();
-                    Console.Write($"时长获取进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total})");
+                    Console.Write($"时长获取进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total}) {BuildProgressTime(current, total, phaseTimerDuration.Elapsed)}");
                 }
             });
             Ansi.ClearCurtLine();
-            Console.Write($"时长获取进度:{Effects.ProgressBar(40, 1)}({total}/{total})");
+            Console.Write($"时长获取进度:{Effects.ProgressBar(40, 1)}({total}/{total}) {BuildProgressTime(total, total, phaseTimerDuration.Elapsed)}");
             Ansi.ShowCursor();
             Console.WriteLine();
 
@@ -115,8 +116,9 @@ namespace CustomTools.Tools
             var caches = LoadVideoCaches(files);
             var dirtyDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             int idDone = 0;
+            var phaseTimerId = Stopwatch.StartNew();
             Ansi.HideCursor();
-            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 0)}(0/{total})");
+            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 0)}(0/{total}) {BuildProgressTime(0, total, phaseTimerId.Elapsed)}");
             Parallel.For(0, total, parallelOptions, i =>
             {
                 var directory = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
@@ -154,11 +156,11 @@ namespace CustomTools.Tools
                 lock (consoleLock)
                 {
                     Ansi.ClearCurtLine();
-                    Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total})");
+                    Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total}) {BuildProgressTime(current, total, phaseTimerId.Elapsed)}");
                 }
             });
             Ansi.ClearCurtLine();
-            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 1)}({total}/{total})");
+            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 1)}({total}/{total}) {BuildProgressTime(total, total, phaseTimerId.Elapsed)}");
             Ansi.ShowCursor();
             Console.WriteLine();
 
@@ -197,8 +199,9 @@ namespace CustomTools.Tools
             {
                 int computed = 0;
                 var computeTotal = toCompute.Count;
+                var phaseTimerPhash = Stopwatch.StartNew();
                 Ansi.HideCursor();
-                Console.Write($"pHash 进度:{Effects.ProgressBar(40, 0)}(0/{computeTotal})");
+                Console.Write($"pHash 进度:{Effects.ProgressBar(40, 0)}(0/{computeTotal}) {BuildProgressTime(0, computeTotal, phaseTimerPhash.Elapsed)}");
 
                 Parallel.For(0, computeTotal, parallelOptions, i =>
                 {
@@ -219,9 +222,13 @@ namespace CustomTools.Tools
                         var key = ids[index].Length > 0 ? VideoCheckCache.ToKey(ids[index]) : string.Empty;
                         if (cache != null && key.Length > 0)
                         {
-                            var info = new FileInfo(files[index]);
-                            cache.Add(new CacheEntry(ids[index], info.Length, info.LastWriteTimeUtc.Ticks, durations[index], hashes));
-                            dirtyDirs.Add(directory);
+                            lock (consoleLock)
+                            {
+                                var info = new FileInfo(files[index]);
+                                cache.Add(new CacheEntry(ids[index], info.Length, info.LastWriteTimeUtc.Ticks, durations[index], hashes));
+                                dirtyDirs.Add(directory);
+                                VideoCheckCache.Write(directory, cache.ById.Values);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -237,12 +244,12 @@ namespace CustomTools.Tools
                     lock (consoleLock)
                     {
                         Ansi.ClearCurtLine();
-                        Console.Write($"pHash 进度:{Effects.ProgressBar(40, current / (float)computeTotal)}({current}/{computeTotal})");
+                        Console.Write($"pHash 进度:{Effects.ProgressBar(40, current / (float)computeTotal)}({current}/{computeTotal}) {BuildProgressTime(current, computeTotal, phaseTimerPhash.Elapsed)}");
                     }
                 });
 
                 Ansi.ClearCurtLine();
-                Console.Write($"pHash 进度:{Effects.ProgressBar(40, 1)}({computeTotal}/{computeTotal})");
+                Console.Write($"pHash 进度:{Effects.ProgressBar(40, 1)}({computeTotal}/{computeTotal}) {BuildProgressTime(computeTotal, computeTotal, phaseTimerPhash.Elapsed)}");
                 Ansi.ShowCursor();
                 Console.WriteLine();
             }
@@ -260,6 +267,7 @@ namespace CustomTools.Tools
 
             var groups = MatchGroups(videos);
             ShowResults(groups);
+            UpdateCacheFiles(caches, ids, files, dirtyDirs);
             AutoCloseConsole();
         }
 
@@ -290,7 +298,9 @@ namespace CustomTools.Tools
                 for (int i = 0; i < files.Length; i++)
                 {
                     var fileDir = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
-                    if (string.Equals(fileDir, directory, StringComparison.OrdinalIgnoreCase) && ids[i].Length > 0)
+                    if (string.Equals(fileDir, directory, StringComparison.OrdinalIgnoreCase) &&
+                        ids[i].Length > 0 &&
+                        File.Exists(files[i]))
                     {
                         currentIds.Add(VideoCheckCache.ToKey(ids[i]));
                     }
@@ -600,7 +610,7 @@ namespace CustomTools.Tools
 
             if (window.DeletedCount > 0)
             {
-                Console.WriteLine($"已删除 {window.DeletedCount} 个视频");
+                Console.WriteLine($"已删除 {window.DeletedCount} 个视频，共 {FormatSize(window.DeletedBytes)}");
                 if (window.FailedCount > 0)
                 {
                     Console.WriteLine($"删除失败 {window.FailedCount} 个");
@@ -623,6 +633,29 @@ namespace CustomTools.Tools
                 WindowStyle = ProcessWindowStyle.Hidden
             };
             return System.Diagnostics.Process.Start(startInfo) ?? throw new InvalidOperationException($"无法启动进程：{fileName}");
+        }
+
+        private static string BuildProgressTime(int current, int total, TimeSpan elapsed)
+        {
+            var remaining = current > 0
+                ? TimeSpan.FromSeconds(elapsed.TotalSeconds / current * (total - current))
+                : TimeSpan.Zero;
+            return $"已耗时:{FormatTime(elapsed)} 剩余:{FormatTime(remaining)}";
+        }
+
+        private static string FormatTime(TimeSpan time)
+        {
+            return $"{(int)time.TotalHours:00}:{time.Minutes:00}:{time.Seconds:00}";
+        }
+
+        private static string FormatSize(long bytes)
+        {
+            const long kb = 1024;
+            const long mb = 1024 * 1024;
+            const long gb = 1024 * 1024 * 1024;
+            if (bytes >= gb) return $"{bytes / (double)gb:F2}G";
+            if (bytes >= mb) return $"{bytes / (double)mb:F2}M";
+            return $"{Math.Max(1, bytes / (double)kb):F0}KB";
         }
 
     }

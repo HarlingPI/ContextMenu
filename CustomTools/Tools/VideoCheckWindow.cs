@@ -23,6 +23,7 @@ namespace CustomTools.Tools
 
         public List<string> SelectedFiles { get; } = new List<string>();
         public int DeletedCount { get; private set; }
+        public long DeletedBytes { get; private set; }
         public int FailedCount { get; private set; }
 
         public VideoCheckWindow(List<VideoGroup> groups)
@@ -80,7 +81,7 @@ namespace CustomTools.Tools
                 for (int j = 0; j < group.Items.Count; j++)
                 {
                     var item = group.Items[j];
-                    var node = new TreeNode($"{System.IO.Path.GetFileName(item.FilePath)}（{item.Duration:F1}s）")
+                    var node = new TreeNode($"{System.IO.Path.GetFileName(item.FilePath)}（{item.Duration:F1}s，{FormatSize(new System.IO.FileInfo(item.FilePath).Length)}）")
                     {
                         Tag = item.FilePath
                     };
@@ -128,9 +129,11 @@ namespace CustomTools.Tools
             {
                 try
                 {
+                    var length = new System.IO.FileInfo(file).Length;
                     FileUtils.DeleteFile(file);
                     deleted.Add(file);
                     DeletedCount++;
+                    DeletedBytes += length;
                 }
                 catch
                 {
@@ -150,9 +153,18 @@ namespace CustomTools.Tools
             // 没有任何分组时自动关闭窗口
             if (groups.Count == 0)
             {
-            DialogResult = DialogResult.OK;
+                DialogResult = DialogResult.OK;
+            }
         }
 
+        private static string FormatSize(long bytes)
+        {
+            const long kb = 1024;
+            const long mb = 1024 * 1024;
+            const long gb = 1024 * 1024 * 1024;
+            if (bytes >= gb) return $"{bytes / (double)gb:F2}G";
+            if (bytes >= mb) return $"{bytes / (double)mb:F2}M";
+            return $"{Math.Max(1, bytes / (double)kb):F0}KB";
         }
 
         private void TreeView_AfterSelect(object? sender, TreeViewEventArgs e)
