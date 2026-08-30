@@ -95,29 +95,40 @@ namespace CustomTools.Tools
             {
                 try
                 {
-                    ids[i] = VideoCheckCache.ComputeContentId(files[i]);
+                    durations[i] = GetDuration(files[i]);
                 }
                 catch
                 {
-                    ids[i] = Array.Empty<byte>();
+                    durations[i] = 0;
+                }
+                var directory = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
+                var dirCache = caches.TryGetValue(directory, out var loaded) ? loaded : null;
+                string signatureKey = string.Empty;
+                try
+                {
+                    signatureKey = VideoCheckCache.ComputeSignatureKey(files[i], durations[i]);
+                }
+                catch
+                {
+                    // 忽略无法读取元数据的文件
                 }
 
-                var directory = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
-                var cache = caches.TryGetValue(directory, out var dirCache) ? dirCache : null;
-                var key = ids[i].Length > 0 ? VideoCheckCache.ToKey(ids[i]) : string.Empty;
-                if (cache != null && key.Length > 0 && cache.TryGetValue(key, out var entry) && entry.Duration > 0)
+                if (dirCache != null &&
+                    signatureKey.Length > 0 &&
+                    dirCache.BySignature.TryGetValue(signatureKey, out var cachedList) &&
+                    cachedList.Count == 1)
                 {
-                    durations[i] = entry.Duration;
+                    ids[i] = cachedList[0].Id;
                 }
                 else
                 {
                     try
                     {
-                        durations[i] = GetDuration(files[i]);
+                        ids[i] = VideoCheckCache.ComputeContentId(files[i]);
                     }
                     catch
                     {
-                        durations[i] = 0;
+                        ids[i] = Array.Empty<byte>();
                     }
                 }
 
@@ -153,7 +164,7 @@ namespace CustomTools.Tools
                 var directory = Path.GetFullPath(Path.GetDirectoryName(files[index]) ?? ".");
                 var cache = caches.TryGetValue(directory, out var dirCache) ? dirCache : null;
                 var key = ids[index].Length > 0 ? VideoCheckCache.ToKey(ids[index]) : string.Empty;
-                if (cache != null && key.Length > 0 && cache.TryGetValue(key, out var entry) && entry.Hashes.Length > 0)
+                if (cache != null && key.Length > 0 && cache.ById.TryGetValue(key, out var entry) && entry.Hashes.Length > 0)
                 {
                     results[i] = new VideoResult(files[index], durations[index], entry.Hashes);
                 }
@@ -190,7 +201,8 @@ namespace CustomTools.Tools
                         var key = ids[index].Length > 0 ? VideoCheckCache.ToKey(ids[index]) : string.Empty;
                         if (cache != null && key.Length > 0)
                         {
-                            cache[key] = new CacheEntry(ids[index], durations[index], hashes);
+                            var info = new FileInfo(files[index]);
+                            cache.Add(new CacheEntry(ids[index], info.Length, info.LastWriteTimeUtc.Ticks, durations[index], hashes));
                             dirtyDirs.Add(directory);
                         }
                     }
@@ -233,9 +245,9 @@ namespace CustomTools.Tools
             AutoCloseConsole();
         }
 
-        private static Dictionary<string, Dictionary<string, CacheEntry>> LoadVideoCaches(string[] files)
+        private static Dictionary<string, DirectoryCache> LoadVideoCaches(string[] files)
         {
-            var caches = new Dictionary<string, Dictionary<string, CacheEntry>>(StringComparer.OrdinalIgnoreCase);
+            var caches = new Dictionary<string, DirectoryCache>(StringComparer.OrdinalIgnoreCase);
             foreach (var file in files)
             {
                 var directory = Path.GetFullPath(Path.GetDirectoryName(file) ?? ".");
@@ -248,7 +260,7 @@ namespace CustomTools.Tools
         }
 
         private void UpdateCacheFiles(
-            Dictionary<string, Dictionary<string, CacheEntry>> caches,
+            Dictionary<string, DirectoryCache> caches,
             byte[][] ids,
             string[] files,
             HashSet<string> dirtyDirs)
@@ -267,11 +279,12 @@ namespace CustomTools.Tools
                 }
 
                 var removed = false;
-                foreach (var key in cache.Keys.ToArray())
+                foreach (var idKey in cache.ById.Keys.ToArray())
                 {
-                    if (!currentIds.Contains(key))
+                    if (!currentIds.Contains(idKey))
                     {
-                        cache.Remove(key);
+                        var entry = cache.ById[idKey];
+                        cache.Remove(idKey, VideoCheckCache.SignatureKey(entry.Length, entry.LastWriteTimeTicks, entry.Duration));
                         removed = true;
                     }
                 }
@@ -285,9 +298,9 @@ namespace CustomTools.Tools
                     continue;
                 }
 
-                if (cache.Count > 0)
+                if (cache.ById.Count > 0)
                 {
-                    VideoCheckCache.Write(directory, cache.Values);
+                    VideoCheckCache.Write(directory, cache.ById.Values);
                 }
                 else
                 {
