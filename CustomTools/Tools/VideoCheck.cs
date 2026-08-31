@@ -35,6 +35,7 @@ namespace CustomTools.Tools
         private readonly double durationTolerance;
         private readonly int parallelism;
         private readonly string hwaccel;
+        private readonly bool keyframeSampling;
         private readonly string ffmpegPath;
         private readonly string ffprobePath;
         private readonly object consoleLock = new object();
@@ -48,6 +49,7 @@ namespace CustomTools.Tools
             durationTolerance = config.VideoDurationTolerance;
             parallelism = config.VideoParallelism;
             hwaccel = config.VideoHardwareAccel;
+            keyframeSampling = config.VideoKeyframeSampling;
 
             var baseDir = AppContext.BaseDirectory;
             ffmpegPath = Path.Combine(baseDir, "FFmpeg", "ffmpeg.exe");
@@ -68,6 +70,7 @@ namespace CustomTools.Tools
                 .OrderBy(file => new FileInfo(file).Length)
                 .ToArray();
 
+            CleanupOrphanCaches(path);
             Console.WriteLine($"发现 {files.Length} 个视频文件");
             if (files.Length == 0)
             {
@@ -209,7 +212,7 @@ namespace CustomTools.Tools
                     var index = candidates[candidateIndex];
                     try
                     {
-                        var frameHashes = ComputePhashes(files[index]);
+                        var frameHashes = ComputePhashes(files[index], durations[index]);
                         if (frameHashes.Count == 0)
                         {
                             throw new InvalidOperationException("未能提取到有效帧");
@@ -283,6 +286,39 @@ namespace CustomTools.Tools
                 }
             }
             return caches;
+        }
+
+        private void CleanupOrphanCaches(string rootPath)
+        {
+            // 删除“目录本身没有视频，只残留 .phash.cache”的缓存，并移除随后变空的子目录
+            var directories = new List<string>(Directory.EnumerateDirectories(rootPath, "*", SearchOption.AllDirectories));
+            directories.Add(rootPath);
+            foreach (var directory in directories)
+            {
+                if (string.Equals(Path.GetFullPath(directory), Path.GetFullPath(rootPath), StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var cachePath = VideoCheckCache.GetCachePath(directory);
+                if (!File.Exists(cachePath))
+                {
+                    continue;
+                }
+
+                var hasVideo = Directory.EnumerateFiles(directory)
+                    .Any(file => VideoExtensions.Contains(Path.GetExtension(file)));
+                if (hasVideo)
+                {
+                    continue;
+                }
+
+                File.Delete(cachePath);
+                if (!Directory.EnumerateFileSystemEntries(directory).Any())
+                {
+                    Directory.Delete(directory, false);
+                }
+            }
         }
 
         private void UpdateCacheFiles(
@@ -400,8 +436,78 @@ namespace CustomTools.Tools
             return double.TryParse(output.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : 0;
         }
 
-        private List<byte[]> ComputePhashes(string file)
+        private List<byte[]> ComputeKeyframePhashes(string file, double duration)
         {
+            var crop = $"crop=iw-2*round(iw*{CropRatio}):ih-2*round(ih*{CropRatio}):round(iw*{CropRatio}):round(ih*{CropRatio})";
+            var filter = $"{crop},scale=32:32:flags=bilinear";
+            var streamHashes = ExtractKeyframeFrames(file, filter);
+            if (streamHashes.Count == 0)
+            {
+                return ExtractPhashes(file, "none");
+            }
+
+            var fullSeconds = (int)duration;
+            var hashes = new List<byte[]>();
+            for (var sec = 0; sec < fullSeconds; sec++)
+            {
+                for (var pos = 1; pos <= frameCount; pos++)
+                {
+                    var target = sec + (double)pos / (frameCount + 1);
+                    var index = (int)Math.Round(target / Math.Max(duration, 0.001) * (streamHashes.Count - 1));
+                    index = Math.Clamp(index, 0, streamHashes.Count - 1);
+                    hashes.Add(streamHashes[index]);
+                }
+            }
+            return hashes;
+        }
+
+        private List<byte[]> ExtractKeyframeFrames(string file, string filter)
+        {
+            var arguments = $"-hide_banner -loglevel error -nostdin -skip_frame nokey -i \"{file}\" -vf \"{filter}\" -an -fps_mode vfr -pix_fmt gray -f rawvideo -";
+            using var process = StartProcess(ffmpegPath, arguments);
+            _ = process.StandardError.ReadToEndAsync();
+            var stream = process.StandardOutput.BaseStream;
+            var buffer = new byte[FrameSize];
+            var context = new PhashContext();
+            var hashes = new List<byte[]>();
+
+            while (true)
+            {
+                var total = 0;
+                var ended = false;
+                while (total < FrameSize)
+                {
+                    var read = stream.Read(buffer, total, FrameSize - total);
+                    if (read <= 0)
+                    {
+                        ended = true;
+                        break;
+                    }
+                    total += read;
+                }
+
+                if (ended)
+                {
+                    if (total > 0)
+                    {
+                        break;
+                    }
+                    break;
+                }
+                hashes.Add(context.ComputeHash(buffer));
+            }
+
+            process.WaitForExit();
+            return hashes;
+        }
+
+        private List<byte[]> ComputePhashes(string file, double duration)
+        {
+            if (keyframeSampling)
+            {
+                return ComputeKeyframePhashes(file, duration);
+            }
+
             if (hwaccel.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
                 return ExtractPhashes(file, "none");
@@ -694,6 +800,7 @@ namespace CustomTools.Tools
         public double VideoDurationTolerance = 10;
         public int VideoParallelism = 4;
         public string VideoHardwareAccel = "none";
+        public bool VideoKeyframeSampling = true;
 
         public static ToolsConfig LoadVideoCheck()
         {
@@ -729,6 +836,11 @@ namespace CustomTools.Tools
                 else if (key == "video.hwaccel" && value.Length > 0)
                 {
                     config.VideoHardwareAccel = value;
+                }
+                else if (key == "video.keyframeSampling" &&
+                    bool.TryParse(value, out var keyframeSampling))
+                {
+                    config.VideoKeyframeSampling = keyframeSampling;
                 }
                 else if (key == "video.durationTolerance" &&
                     double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var tolerance) && tolerance >= 0)

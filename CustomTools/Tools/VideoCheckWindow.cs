@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace CustomTools.Tools
@@ -35,35 +36,50 @@ namespace CustomTools.Tools
             Size = new Size(780, 560);
             MinimumSize = new Size(560, 360);
             Font = new Font("Microsoft YaHei UI", 9F);
+            BackColor = Color.FromArgb(32, 32, 32);
+            ForeColor = Color.FromArgb(230, 230, 230);
 
             treeView.Dock = DockStyle.Fill;
             treeView.HideSelection = false;
             treeView.CheckBoxes = true;
+            treeView.BackColor = Color.FromArgb(32, 32, 32);
+            treeView.ForeColor = Color.FromArgb(230, 230, 230);
             treeView.NodeMouseClick += TreeView_NodeMouseClick;
             treeView.AfterSelect += TreeView_AfterSelect;
+            HandleCreated += (_, _) => ApplyDarkTitleBar();
 
             var bottomPanel = new Panel
             {
                 Dock = DockStyle.Bottom,
                 Height = 48,
-                Padding = new Padding(10)
+                Padding = new Padding(10),
+                BackColor = Color.FromArgb(44, 44, 44)
             };
 
             deleteButton.Text = "删除选中项";
             deleteButton.Size = new Size(120, 28);
             deleteButton.Location = new Point(10, 10);
+            deleteButton.BackColor = Color.FromArgb(70, 70, 70);
+            deleteButton.ForeColor = Color.FromArgb(230, 230, 230);
+            deleteButton.FlatStyle = FlatStyle.Flat;
+            deleteButton.FlatAppearance.BorderColor = Color.FromArgb(110, 110, 110);
             deleteButton.Click += DeleteButton_Click;
 
             cancelButton.Text = "取消";
             cancelButton.DialogResult = DialogResult.Cancel;
             cancelButton.Size = new Size(90, 28);
             cancelButton.Location = new Point(140, 10);
+            cancelButton.BackColor = Color.FromArgb(70, 70, 70);
+            cancelButton.ForeColor = Color.FromArgb(230, 230, 230);
+            cancelButton.FlatStyle = FlatStyle.Flat;
+            cancelButton.FlatAppearance.BorderColor = Color.FromArgb(110, 110, 110);
 
             bottomPanel.Controls.Add(deleteButton);
             bottomPanel.Controls.Add(cancelButton);
 
             Controls.Add(treeView);
             Controls.Add(bottomPanel);
+            Shown += (_, _) => ApplyDarkTitleBar();
 
             BuildGroups();
         }
@@ -166,6 +182,50 @@ namespace CustomTools.Tools
             if (bytes >= mb) return $"{bytes / (double)mb:F2}M";
             return $"{Math.Max(1, bytes / (double)kb):F0}KB";
         }
+
+        private void ApplyDarkTitleBar()
+        {
+            var hwnd = Handle;
+            var enabled = 1;
+            // DWMWA_USE_IMMERSIVE_DARK_MODE，部分旧系统用属性 19
+            DwmSetWindowAttribute(hwnd, 20, ref enabled, sizeof(int));
+            DwmSetWindowAttribute(hwnd, 19, ref enabled, sizeof(int));
+            // 立即刷新窗口边框，避免需要先最小化/最大化才生效
+            const uint SWP_NOSIZE = 0x0001;
+            const uint SWP_NOMOVE = 0x0002;
+            const uint SWP_NOZORDER = 0x0004;
+            const uint SWP_NOACTIVATE = 0x0010;
+            const uint SWP_FRAMECHANGED = 0x0020;
+            SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
+                SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+            // 强制重绘窗口边框，确保深色标题栏立即生效
+            const uint RDW_INVALIDATE = 0x0001;
+            const uint RDW_UPDATENOW = 0x0100;
+            const uint RDW_FRAME = 0x0400;
+            const uint RDW_ALLCHILDREN = 0x0080;
+            RedrawWindow(hwnd, IntPtr.Zero, IntPtr.Zero,
+                RDW_INVALIDATE | RDW_UPDATENOW | RDW_FRAME | RDW_ALLCHILDREN);
+        }
+
+        [DllImport("dwmapi.dll", PreserveSig = true)]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowPos(
+            IntPtr hWnd,
+            IntPtr hWndInsertAfter,
+            int x,
+            int y,
+            int cx,
+            int cy,
+            uint uFlags);
+
+        [DllImport("user32.dll")]
+        private static extern bool RedrawWindow(
+            IntPtr hWnd,
+            IntPtr lprcUpdate,
+            IntPtr hrgnUpdate,
+            uint flags);
 
         private void TreeView_AfterSelect(object? sender, TreeViewEventArgs e)
         {

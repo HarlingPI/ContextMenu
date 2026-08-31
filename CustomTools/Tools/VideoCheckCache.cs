@@ -154,7 +154,7 @@ namespace CustomTools.Tools
                 {
                     return cache;
                 }
-                if (reader.ReadInt32() != 4)
+                if (reader.ReadInt32() != 5)
                 {
                     return cache;
                 }
@@ -212,7 +212,7 @@ namespace CustomTools.Tools
             using var stream = File.Create(path);
             using var writer = new BinaryWriter(stream);
             writer.Write(Magic);
-            writer.Write(4);
+            writer.Write(5);
             writer.Write(list.Count);
 
             foreach (var entry in list)
