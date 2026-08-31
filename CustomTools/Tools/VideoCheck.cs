@@ -447,6 +447,11 @@ namespace CustomTools.Tools
             }
 
             var fullSeconds = (int)duration;
+            if (fullSeconds <= 0)
+            {
+                // 短于 1 秒的视频按全量抽帧处理
+                return ExtractPhashes(file, "none");
+            }
             var hashes = new List<byte[]>();
             for (var sec = 0; sec < fullSeconds; sec++)
             {
