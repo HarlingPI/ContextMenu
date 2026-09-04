@@ -29,6 +29,7 @@ namespace CustomTools.Tools
 
         private const int FrameSize = 32 * 32;
         private const double CropRatio = 0.15;
+        private const string ZscalePrefix = "zscale=matrixin=bt2020nc:matrix=bt709,";
 
         private readonly int frameCount;
         private readonly int threshold;
@@ -443,7 +444,11 @@ namespace CustomTools.Tools
             var streamHashes = ExtractKeyframeFrames(file, filter);
             if (streamHashes.Count == 0)
             {
-                return ExtractPhashes(file, "none");
+                streamHashes = ExtractKeyframeFrames(file, ZscalePrefix + filter);
+            }
+            if (streamHashes.Count == 0)
+            {
+                return ExtractPhashesWithFallback(file);
             }
 
             var fullSeconds = (int)duration;
@@ -515,7 +520,7 @@ namespace CustomTools.Tools
 
             if (hwaccel.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
-                return ExtractPhashes(file, "none");
+                return ExtractPhashesWithFallback(file);
             }
 
             try
@@ -524,18 +529,28 @@ namespace CustomTools.Tools
             }
             catch
             {
-                // 硬件解码失败时回退到 CPU 解码
-                var cpuHashes = ExtractPhashes(file, "none");
                 ReportHardwareFallback();
-                return cpuHashes;
+                return ExtractPhashesWithFallback(file);
             }
         }
 
-        private List<byte[]> ExtractPhashes(string file, string accel)
+        private List<byte[]> ExtractPhashesWithFallback(string file)
+        {
+            try
+            {
+                return ExtractPhashes(file, "none");
+            }
+            catch
+            {
+                return ExtractPhashes(file, "none", ZscalePrefix);
+            }
+        }
+
+        private List<byte[]> ExtractPhashes(string file, string accel, string colorPrefix = "")
         {
             var outputRate = frameCount + 1;
             var crop = $"crop=iw-2*round(iw*{CropRatio}):ih-2*round(ih*{CropRatio}):round(iw*{CropRatio}):round(ih*{CropRatio})";
-            var filter = $"fps={outputRate},select='not(eq(mod(n,{outputRate}),0))',format=gray,{crop},scale=32:32:flags=bilinear";
+            var filter = $"{colorPrefix}fps={outputRate},select='not(eq(mod(n,{outputRate}),0))',format=gray,{crop},scale=32:32:flags=bilinear";
             var accelArg = accel.Equals("none", StringComparison.OrdinalIgnoreCase) ? string.Empty : $"-hwaccel {accel} ";
             var arguments = $"-hide_banner -loglevel error -nostdin {accelArg}-i \"{file}\" -vf \"{filter}\" -an -fps_mode vfr -pix_fmt gray -f rawvideo -";
 
