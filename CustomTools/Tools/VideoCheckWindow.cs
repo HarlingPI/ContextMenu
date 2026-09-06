@@ -108,6 +108,7 @@ namespace CustomTools.Tools
             }
 
             treeView.EndUpdate();
+            treeView.ExpandAll();
         }
 
         private void DeleteButton_Click(object? sender, EventArgs e)
