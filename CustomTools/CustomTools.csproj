@@ -7,9 +7,12 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<ApplicationIcon>Resources\Main.ico</ApplicationIcon>
+
 		<!-- 版本信息配置 -->
 		<!-- 由 Codex 修改：新增 Settings 菜单项，提升版本号以触发注册表更新 -->
-		<FileVersion>1.12.61</FileVersion>
+		<!-- 由 Codex 修改：视频查重图标更新后提升版本，触发右键菜单重新安装 -->
+		<FileVersion>1.12.62</FileVersion>
+
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>

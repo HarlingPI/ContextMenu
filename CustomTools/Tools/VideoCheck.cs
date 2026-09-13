@@ -292,7 +292,16 @@ namespace CustomTools.Tools
         private void CleanupOrphanCaches(string rootPath)
         {
             // 删除“目录本身没有视频，只残留 .phash.cache”的缓存，并移除随后变空的子目录
-            var directories = new List<string>(Directory.EnumerateDirectories(rootPath, "*", SearchOption.AllDirectories));
+
+            // 由 Codex 修改：跳过无权限目录和重解析点，避免访问驱动器系统目录时中断清理
+            var enumerationOptions = new EnumerationOptions
+            {
+                RecurseSubdirectories = true,
+                IgnoreInaccessible = true,
+                AttributesToSkip = FileAttributes.ReparsePoint | FileAttributes.System
+            };
+            var directories = new List<string>(Directory.EnumerateDirectories(rootPath, "*", enumerationOptions));
+
             directories.Add(rootPath);
             foreach (var directory in directories)
             {
