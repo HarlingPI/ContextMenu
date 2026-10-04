@@ -35,7 +35,18 @@ namespace CustomTools.Tools
         private readonly int frameCount;
         private readonly int threshold;
         private readonly double durationTolerance;
-        private readonly int parallelism;
+
+        #region 由 Codex 添加：磁盘类型并行配置字段
+
+        // 由 Codex 修改：按磁盘类型选择并行数量，无法识别时使用默认值
+
+        private readonly int defaultParallelism;
+        private readonly int hddParallelism;
+        private readonly int ssdParallelism;
+        private readonly string diskType;
+
+        #endregion
+
         private readonly string hwaccel;
         private readonly bool keyframeSampling;
         private readonly string ffmpegPath;
@@ -49,7 +60,10 @@ namespace CustomTools.Tools
             frameCount = config.VideoFrameCount;
             threshold = config.VideoThreshold;
             durationTolerance = config.VideoDurationTolerance;
-            parallelism = config.VideoParallelism;
+            defaultParallelism = config.VideoParallelism;
+            hddParallelism = config.VideoParallelismHdd;
+            ssdParallelism = config.VideoParallelismSsd;
+            diskType = config.VideoDiskType;
             hwaccel = config.VideoHardwareAccel;
             keyframeSampling = config.VideoKeyframeSampling;
 
@@ -83,7 +97,7 @@ namespace CustomTools.Tools
 
             var parallelOptions = new ParallelOptions
             {
-                MaxDegreeOfParallelism = Math.Clamp(parallelism, 1, Environment.ProcessorCount)
+                MaxDegreeOfParallelism = ResolveParallelism(path)
             };
 
             // 阶段1a：仅获取时长
@@ -637,6 +651,37 @@ namespace CustomTools.Tools
             Console.WriteLine("硬件解码不可用，已自动回退 CPU 解码");
         }
 
+        #region 由 Codex 添加：磁盘类型并行数量解析
+
+        private int ResolveParallelism(string path)
+        {
+            var requestedType = diskType.Trim().ToLowerInvariant();
+            var mediaType = requestedType switch
+            {
+                "hdd" => DiskMediaType.Hdd,
+                "ssd" => DiskMediaType.Ssd,
+                _ => DiskPerformance.Detect(path)
+            };
+
+            var selected = mediaType switch
+            {
+                DiskMediaType.Hdd when hddParallelism > 0 => hddParallelism,
+                DiskMediaType.Ssd when ssdParallelism > 0 => ssdParallelism,
+                _ => defaultParallelism
+            };
+
+            var mediaName = mediaType switch
+            {
+                DiskMediaType.Hdd => "机械硬盘",
+                DiskMediaType.Ssd => "固态硬盘",
+                _ => "未知，使用默认值"
+            };
+            Console.WriteLine($"磁盘类型：{mediaName}，视频查重并行数：{selected}");
+            return Math.Clamp(selected, 1, Environment.ProcessorCount);
+        }
+
+        #endregion
+
         private List<VideoGroup> MatchGroups(VideoResult[] items)
         {
             var parent = new int[items.Length];
@@ -852,6 +897,15 @@ namespace CustomTools.Tools
         public int VideoThreshold = 30;
         public double VideoDurationTolerance = 10;
         public int VideoParallelism = 4;
+
+        #region 由 Codex 添加：磁盘类型并行配置
+
+        public int VideoParallelismHdd = 1;
+        public int VideoParallelismSsd = 6;
+        public string VideoDiskType = "auto";
+
+        #endregion
+
         public string VideoHardwareAccel = "none";
         public bool VideoKeyframeSampling = true;
 
@@ -886,6 +940,27 @@ namespace CustomTools.Tools
                 {
                     config.VideoParallelism = parallelism;
                 }
+
+                #region 由 Codex 添加：解析磁盘类型并行配置
+
+                else if (key == "video.parallelism.hdd" && int.TryParse(value, out var hddParallelism) && hddParallelism > 0)
+                {
+                    config.VideoParallelismHdd = hddParallelism;
+                }
+                else if (key == "video.parallelism.ssd" && int.TryParse(value, out var ssdParallelism) && ssdParallelism > 0)
+                {
+                    config.VideoParallelismSsd = ssdParallelism;
+                }
+                else if (key == "video.diskType" &&
+                    (value.Equals("auto", StringComparison.OrdinalIgnoreCase) ||
+                     value.Equals("hdd", StringComparison.OrdinalIgnoreCase) ||
+                     value.Equals("ssd", StringComparison.OrdinalIgnoreCase)))
+                {
+                    config.VideoDiskType = value.ToLowerInvariant();
+                }
+
+                #endregion
+
                 else if (key == "video.hwaccel" && value.Length > 0)
                 {
                     config.VideoHardwareAccel = value;
