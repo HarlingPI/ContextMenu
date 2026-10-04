@@ -11,7 +11,8 @@
 		<!-- 版本信息配置 -->
 		<!-- 由 Codex 修改：新增 Settings 菜单项，提升版本号以触发注册表更新 -->
 		<!-- 由 Codex 修改：视频查重图标更新后提升版本，触发右键菜单重新安装 -->
-		<FileVersion>1.12.62</FileVersion>
+		<!-- 由 Codex 修改：修复视频查重缓存加载并改为连续哈希存储，提升版本触发菜单更新 -->
+		<FileVersion>1.12.63</FileVersion>
 
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>

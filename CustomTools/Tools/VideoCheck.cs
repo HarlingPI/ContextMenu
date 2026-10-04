@@ -4,6 +4,7 @@
 using ConsoleKit;
 using PIToolKit.Public.Utils;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -116,7 +117,10 @@ namespace CustomTools.Tools
             Console.WriteLine();
 
             // 阶段1b：仅计算内容 ID
-            var ids = new byte[files.Length][];
+
+            // 由 Codex 修改：内容 ID 直接保存为字符串键，不再使用二维字节数组
+
+            var idKeys = new string[files.Length];
             var caches = LoadVideoCaches(files);
             var dirtyDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             int idDone = 0;
@@ -142,17 +146,17 @@ namespace CustomTools.Tools
                     dirCache.BySignature.TryGetValue(signatureKey, out var cachedList) &&
                     cachedList.Count == 1)
                 {
-                    ids[i] = cachedList[0].Id;
+                    idKeys[i] = VideoCheckCache.ToKey(cachedList[0].Id);
                 }
                 else
                 {
                     try
                     {
-                        ids[i] = VideoCheckCache.ComputeContentId(files[i]);
+                        idKeys[i] = VideoCheckCache.ToKey(VideoCheckCache.ComputeContentId(files[i]));
                     }
                     catch
                     {
-                        ids[i] = Array.Empty<byte>();
+                        idKeys[i] = string.Empty;
                     }
                 }
 
@@ -173,7 +177,7 @@ namespace CustomTools.Tools
             Console.WriteLine($"时长初筛后需要计算 pHash 的视频：{candidates.Length}/{total}");
             if (candidates.Length < 2)
             {
-                UpdateCacheFiles(caches, ids, files, dirtyDirs);
+                UpdateCacheFiles(caches, idKeys, files, dirtyDirs);
                 MessageBox.Show("没有时长相近的视频，无法比较。", "视频查重", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 AutoCloseConsole();
                 return;
@@ -187,7 +191,7 @@ namespace CustomTools.Tools
                 var index = candidates[i];
                 var directory = Path.GetFullPath(Path.GetDirectoryName(files[index]) ?? ".");
                 var cache = caches.TryGetValue(directory, out var dirCache) ? dirCache : null;
-                var key = ids[index].Length > 0 ? VideoCheckCache.ToKey(ids[index]) : string.Empty;
+                var key = idKeys[index];
                 if (cache != null && key.Length > 0 && cache.ById.TryGetValue(key, out var entry) && entry.Hashes.Length > 0)
                 {
                     results[i] = new VideoResult(files[index], durations[index], entry.Hashes);
@@ -213,23 +217,25 @@ namespace CustomTools.Tools
                     var index = candidates[candidateIndex];
                     try
                     {
-                        var frameHashes = ComputePhashes(files[index], durations[index]);
-                        if (frameHashes.Count == 0)
+                        // 由 Codex 修改：直接使用连续哈希缓冲区，不再转换为逐帧数组
+
+                        var hashes = ComputePhashes(files[index], durations[index]);
+                        if (hashes.Length == 0)
                         {
                             throw new InvalidOperationException("未能提取到有效帧");
                         }
-                        var hashes = frameHashes.ToArray();
+
                         results[candidateIndex] = new VideoResult(files[index], durations[index], hashes);
 
                         var directory = Path.GetFullPath(Path.GetDirectoryName(files[index]) ?? ".");
                         var cache = caches.TryGetValue(directory, out var dirCache) ? dirCache : null;
-                        var key = ids[index].Length > 0 ? VideoCheckCache.ToKey(ids[index]) : string.Empty;
+                        var key = idKeys[index];
                         if (cache != null && key.Length > 0)
                         {
                             lock (consoleLock)
                             {
                                 var info = new FileInfo(files[index]);
-                                cache.Add(new CacheEntry(ids[index], info.Length, info.LastWriteTimeUtc.Ticks, durations[index], hashes));
+                                cache.Add(new CacheEntry(Convert.FromHexString(key), info.Length, info.LastWriteTimeUtc.Ticks, durations[index], hashes));
                                 dirtyDirs.Add(directory);
                                 VideoCheckCache.Write(directory, cache.ById.Values);
                             }
@@ -258,7 +264,7 @@ namespace CustomTools.Tools
                 Console.WriteLine();
             }
 
-            UpdateCacheFiles(caches, ids, files, dirtyDirs);
+            UpdateCacheFiles(caches, idKeys, files, dirtyDirs);
 
             var videos = results.Where(item => item != null).Cast<VideoResult>().ToArray();
             Console.WriteLine($"有效视频：{videos.Length}");
@@ -271,7 +277,7 @@ namespace CustomTools.Tools
 
             var groups = MatchGroups(videos);
             ShowResults(groups);
-            UpdateCacheFiles(caches, ids, files, dirtyDirs);
+            UpdateCacheFiles(caches, idKeys, files, dirtyDirs);
             AutoCloseConsole();
         }
 
@@ -333,7 +339,7 @@ namespace CustomTools.Tools
 
         private void UpdateCacheFiles(
             Dictionary<string, DirectoryCache> caches,
-            byte[][] ids,
+            string[] idKeys,
             string[] files,
             HashSet<string> dirtyDirs)
         {
@@ -345,10 +351,10 @@ namespace CustomTools.Tools
                 {
                     var fileDir = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
                     if (string.Equals(fileDir, directory, StringComparison.OrdinalIgnoreCase) &&
-                        ids[i].Length > 0 &&
+                        idKeys[i].Length > 0 &&
                         File.Exists(files[i]))
                     {
-                        currentIds.Add(VideoCheckCache.ToKey(ids[i]));
+                        currentIds.Add(idKeys[i]);
                     }
                 }
 
@@ -446,16 +452,18 @@ namespace CustomTools.Tools
             return double.TryParse(output.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : 0;
         }
 
-        private List<byte[]> ComputeKeyframePhashes(string file, double duration)
+        // 由 Codex 修改：所有帧哈希使用连续 byte[]，每个哈希固定为 VideoCheckCache.HashLength 字节
+
+        private byte[] ComputeKeyframePhashes(string file, double duration)
         {
             var crop = $"crop=iw-2*round(iw*{CropRatio}):ih-2*round(ih*{CropRatio}):round(iw*{CropRatio}):round(ih*{CropRatio})";
             var filter = $"{crop},scale=32:32:flags=bilinear";
             var streamHashes = ExtractKeyframeFrames(file, filter);
-            if (streamHashes.Count == 0)
+            if (streamHashes.Length == 0)
             {
                 streamHashes = ExtractKeyframeFrames(file, ZscalePrefix + filter);
             }
-            if (streamHashes.Count == 0)
+            if (streamHashes.Length == 0)
             {
                 return ExtractPhashesWithFallback(file);
             }
@@ -466,21 +474,30 @@ namespace CustomTools.Tools
                 // 短于 1 秒的视频按全量抽帧处理
                 return ExtractPhashes(file, "none");
             }
-            var hashes = new List<byte[]>();
+
+            var streamHashCount = streamHashes.Length / VideoCheckCache.HashLength;
+            var hashes = new byte[checked(fullSeconds * frameCount * VideoCheckCache.HashLength)];
+            var outputOffset = 0;
             for (var sec = 0; sec < fullSeconds; sec++)
             {
                 for (var pos = 1; pos <= frameCount; pos++)
                 {
                     var target = sec + (double)pos / (frameCount + 1);
-                    var index = (int)Math.Round(target / Math.Max(duration, 0.001) * (streamHashes.Count - 1));
-                    index = Math.Clamp(index, 0, streamHashes.Count - 1);
-                    hashes.Add(streamHashes[index]);
+                    var index = (int)Math.Round(target / Math.Max(duration, 0.001) * (streamHashCount - 1));
+                    index = Math.Clamp(index, 0, streamHashCount - 1);
+                    Buffer.BlockCopy(
+                        streamHashes,
+                        index * VideoCheckCache.HashLength,
+                        hashes,
+                        outputOffset,
+                        VideoCheckCache.HashLength);
+                    outputOffset += VideoCheckCache.HashLength;
                 }
             }
             return hashes;
         }
 
-        private List<byte[]> ExtractKeyframeFrames(string file, string filter)
+        private byte[] ExtractKeyframeFrames(string file, string filter)
         {
             var arguments = $"-hide_banner -loglevel error -nostdin -skip_frame nokey -i \"{file}\" -vf \"{filter}\" -an -fps_mode vfr -pix_fmt gray -f rawvideo -";
             using var process = StartProcess(ffmpegPath, arguments);
@@ -488,7 +505,7 @@ namespace CustomTools.Tools
             var stream = process.StandardOutput.BaseStream;
             var buffer = new byte[FrameSize];
             var context = new PhashContext();
-            var hashes = new List<byte[]>();
+            var hashes = new ArrayBufferWriter<byte>();
 
             while (true)
             {
@@ -513,14 +530,16 @@ namespace CustomTools.Tools
                     }
                     break;
                 }
-                hashes.Add(context.ComputeHash(buffer));
+
+                context.ComputeHash(buffer, hashes.GetSpan(VideoCheckCache.HashLength));
+                hashes.Advance(VideoCheckCache.HashLength);
             }
 
             process.WaitForExit();
-            return hashes;
+            return hashes.WrittenSpan.ToArray();
         }
 
-        private List<byte[]> ComputePhashes(string file, double duration)
+        private byte[] ComputePhashes(string file, double duration)
         {
             if (keyframeSampling)
             {
@@ -543,7 +562,7 @@ namespace CustomTools.Tools
             }
         }
 
-        private List<byte[]> ExtractPhashesWithFallback(string file)
+        private byte[] ExtractPhashesWithFallback(string file)
         {
             try
             {
@@ -555,7 +574,7 @@ namespace CustomTools.Tools
             }
         }
 
-        private List<byte[]> ExtractPhashes(string file, string accel, string colorPrefix = "")
+        private byte[] ExtractPhashes(string file, string accel, string colorPrefix = "")
         {
             var outputRate = frameCount + 1;
             var crop = $"crop=iw-2*round(iw*{CropRatio}):ih-2*round(ih*{CropRatio}):round(iw*{CropRatio}):round(ih*{CropRatio})";
@@ -568,7 +587,7 @@ namespace CustomTools.Tools
             var stream = process.StandardOutput.BaseStream;
             var buffer = new byte[FrameSize];
             var context = new PhashContext();
-            var hashes = new List<byte[]>();
+            var hashes = new ArrayBufferWriter<byte>();
 
             while (true)
             {
@@ -594,7 +613,8 @@ namespace CustomTools.Tools
                     break;
                 }
 
-                hashes.Add(context.ComputeHash(buffer));
+                context.ComputeHash(buffer, hashes.GetSpan(VideoCheckCache.HashLength));
+                hashes.Advance(VideoCheckCache.HashLength);
             }
 
             process.WaitForExit();
@@ -604,7 +624,7 @@ namespace CustomTools.Tools
                 throw new InvalidOperationException(error.Trim());
             }
 
-            return hashes;
+            return hashes.WrittenSpan.ToArray();
         }
 
         private void ReportHardwareFallback()
@@ -677,9 +697,11 @@ namespace CustomTools.Tools
             return Math.Abs(a - b) <= durationTolerance;
         }
 
-        private static double AverageHamming(byte[][] a, byte[][] b)
+        // 由 Codex 修改：比较逻辑改为按连续缓冲区偏移读取
+
+        private static double AverageHamming(byte[] a, byte[] b)
         {
-            var count = Math.Min(a.Length, b.Length);
+            var count = Math.Min(a.Length, b.Length) / VideoCheckCache.HashLength;
             if (count == 0)
             {
                 return double.MaxValue;
@@ -688,11 +710,10 @@ namespace CustomTools.Tools
             long sum = 0;
             for (int f = 0; f < count; f++)
             {
-                var ha = a[f];
-                var hb = b[f];
-                for (int i = 0; i < ha.Length; i++)
+                var offset = f * VideoCheckCache.HashLength;
+                for (int i = 0; i < VideoCheckCache.HashLength; i++)
                 {
-                    sum += PopCount((uint)(ha[i] ^ hb[i]));
+                    sum += PopCount((uint)(a[offset + i] ^ b[offset + i]));
                 }
             }
             return sum / (double)count;
@@ -799,9 +820,12 @@ namespace CustomTools.Tools
     {
         public string FilePath { get; }
         public double Duration { get; }
-        public byte[][] Hashes { get; }
 
-        public VideoResult(string filePath, double duration, byte[][] hashes)
+        // 由 Codex 修改：连续哈希缓冲区，每个哈希固定为 VideoCheckCache.HashLength 字节
+
+        public byte[] Hashes { get; }
+
+        public VideoResult(string filePath, double duration, byte[] hashes)
         {
             FilePath = filePath;
             Duration = duration;

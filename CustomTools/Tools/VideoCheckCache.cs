@@ -17,9 +17,12 @@ namespace CustomTools.Tools
         public long Length { get; }
         public long LastWriteTimeTicks { get; }
         public double Duration { get; }
-        public byte[][] Hashes { get; }
 
-        public CacheEntry(byte[] id, long length, long lastWriteTimeTicks, double duration, byte[][] hashes)
+        // 由 Codex 修改：pHashes 改为连续存储，每个哈希固定占用 HashLength 字节
+
+        public byte[] Hashes { get; }
+
+        public CacheEntry(byte[] id, long length, long lastWriteTimeTicks, double duration, byte[] hashes)
         {
             Id = id;
             Length = length;
@@ -65,7 +68,11 @@ namespace CustomTools.Tools
     {
         private const string CacheFileName = ".phash.cache";
         private const int IdLength = 16;
-        private const int HashLength = 32;
+
+        // 由 Codex 修改：公开哈希长度，供抽帧与比较逻辑共用
+
+        public const int HashLength = 32;
+
         private const int HeadSize = 1024 * 1024;
         private const int TailSize = 1024 * 1024;
         private const int SampleSize = 64 * 1024;
@@ -177,21 +184,17 @@ namespace CustomTools.Tools
                     var lastWriteTimeTicks = reader.ReadInt64();
                     var duration = reader.ReadDouble();
                     var frameCount = reader.ReadInt32();
-                    if (frameCount < 0 || frameCount > 10000)
+
+                    // 由 Codex 修改：按缓存剩余长度校验帧数，不再限制为 10000 帧
+
+                    var hashByteLength = frameCount < 0 ? -1L : (long)frameCount * HashLength;
+                    if (hashByteLength < 0 || hashByteLength > int.MaxValue || hashByteLength > stream.Length - stream.Position)
                     {
                         return cache;
                     }
 
-                    var hashes = new byte[frameCount][];
-                    for (int f = 0; f < frameCount; f++)
-                    {
-                        var hash = reader.ReadBytes(HashLength);
-                        if (hash.Length != HashLength)
-                        {
-                            return cache;
-                        }
-                        hashes[f] = hash;
-                    }
+                    var hashes = new byte[(int)hashByteLength];
+                    stream.ReadExactly(hashes);
 
                     cache.Add(new CacheEntry(id, length, lastWriteTimeTicks, duration, hashes));
                 }
@@ -221,11 +224,16 @@ namespace CustomTools.Tools
                 writer.Write(entry.Length);
                 writer.Write(entry.LastWriteTimeTicks);
                 writer.Write(entry.Duration);
-                writer.Write(entry.Hashes.Length);
-                foreach (var hash in entry.Hashes)
+
+                // 由 Codex 修改：连续哈希按帧数写入，保持原有缓存文件格式
+
+                if (entry.Hashes.Length % HashLength != 0)
                 {
-                    writer.Write(hash);
+                    throw new InvalidDataException("pHashes 长度不是单个哈希长度的整数倍");
                 }
+
+                writer.Write(entry.Hashes.Length / HashLength);
+                writer.Write(entry.Hashes);
             }
         }
 

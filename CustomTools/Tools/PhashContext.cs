@@ -25,9 +25,16 @@ namespace CustomTools.Tools
         private readonly byte[] hashBuffer = new byte[BlockSize * BlockSize / 8];
         private readonly double[,] cosTable = CreateCosTable();
 
+        // 由 Codex 修改：哈希直接写入目标连续缓冲区，避免每帧创建独立数组
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public byte[] ComputeHash(byte[] gray)
+        public void ComputeHash(byte[] gray, Span<byte> destination)
         {
+            if (destination.Length < hashBuffer.Length)
+            {
+                throw new ArgumentException("目标缓冲区长度不足", nameof(destination));
+            }
+
             // ffmpeg 已输出 32x32 灰度帧，直接拷贝即可
             Buffer.BlockCopy(gray, 0, grayData, 0, grayData.Length);
 
@@ -76,7 +83,7 @@ namespace CustomTools.Tools
                 }
             }
 
-            return (byte[])hashBuffer.Clone();
+            hashBuffer.AsSpan().CopyTo(destination);
         }
 
         private static void Dct1D(double[] input, double[] output, double[,] cosTable)
