@@ -86,10 +86,11 @@ namespace CustomTools.Tools
                 .OrderBy(file => new FileInfo(file).Length)
                 .ToArray();
 
-            #region 由 Codex 添加：预计算文件大小用于按字节估算剩余时间
+            #region 由 Codex 添加：预计算文件大小和阶段工作量
 
             var fileSizes = files.Select(file => new FileInfo(file).Length).ToArray();
-            var totalBytes = fileSizes.Sum();
+            var contentIdWork = fileSizes.Select(EstimateContentIdReadBytes).ToArray();
+            var totalContentIdWork = contentIdWork.Sum();
 
             #endregion
 
@@ -110,11 +111,11 @@ namespace CustomTools.Tools
             // 阶段1a：仅获取时长
             var durations = new double[files.Length];
             int probed = 0;
-            long durationBytesDone = 0;
             var total = files.Length;
+            var durationEstimator = new ProgressEstimator(total);
             var phaseTimerDuration = Stopwatch.StartNew();
             Ansi.HideCursor();
-            Console.Write($"时长获取进度:{Effects.ProgressBar(40, 0)}(0/{total}) {BuildProgressTime(0, totalBytes, phaseTimerDuration.Elapsed)}");
+            Console.Write($"时长获取进度:{Effects.ProgressBar(40, 0)}(0/{total}) {durationEstimator.Build(phaseTimerDuration.Elapsed)}");
             Parallel.For(0, total, parallelOptions, i =>
             {
                 try
@@ -127,15 +128,16 @@ namespace CustomTools.Tools
                 }
 
                 var current = Interlocked.Increment(ref probed);
-                var currentBytes = Interlocked.Add(ref durationBytesDone, fileSizes[i]);
                 lock (consoleLock)
                 {
+                    var elapsed = phaseTimerDuration.Elapsed;
+                    durationEstimator.Complete(1);
                     Ansi.ClearCurtLine();
-                    Console.Write($"时长获取进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total}) {BuildProgressTime(currentBytes, totalBytes, phaseTimerDuration.Elapsed)}");
+                    Console.Write($"时长获取进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total}) {durationEstimator.Build(elapsed)}");
                 }
             });
             Ansi.ClearCurtLine();
-            Console.Write($"时长获取进度:{Effects.ProgressBar(40, 1)}({total}/{total}) {BuildProgressTime(totalBytes, totalBytes, phaseTimerDuration.Elapsed)}");
+            Console.Write($"时长获取进度:{Effects.ProgressBar(40, 1)}({total}/{total}) {durationEstimator.Build(phaseTimerDuration.Elapsed)}");
             Ansi.ShowCursor();
             Console.WriteLine();
 
@@ -147,10 +149,10 @@ namespace CustomTools.Tools
             var caches = LoadVideoCaches(files);
             var dirtyDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             int idDone = 0;
-            long idBytesDone = 0;
+            var contentIdEstimator = new ProgressEstimator(totalContentIdWork);
             var phaseTimerId = Stopwatch.StartNew();
             Ansi.HideCursor();
-            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 0)}(0/{total}) {BuildProgressTime(0, totalBytes, phaseTimerId.Elapsed)}");
+            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 0)}(0/{total}) {contentIdEstimator.Build(phaseTimerId.Elapsed)}");
             Parallel.For(0, total, parallelOptions, i =>
             {
                 var directory = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
@@ -185,15 +187,16 @@ namespace CustomTools.Tools
                 }
 
                 var current = Interlocked.Increment(ref idDone);
-                var currentBytes = Interlocked.Add(ref idBytesDone, fileSizes[i]);
                 lock (consoleLock)
                 {
+                    var elapsed = phaseTimerId.Elapsed;
+                    contentIdEstimator.Complete(contentIdWork[i]);
                     Ansi.ClearCurtLine();
-                    Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total}) {BuildProgressTime(currentBytes, totalBytes, phaseTimerId.Elapsed)}");
+                    Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total}) {contentIdEstimator.Build(elapsed)}");
                 }
             });
             Ansi.ClearCurtLine();
-            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 1)}({total}/{total}) {BuildProgressTime(totalBytes, totalBytes, phaseTimerId.Elapsed)}");
+            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 1)}({total}/{total}) {contentIdEstimator.Build(phaseTimerId.Elapsed)}");
             Ansi.ShowCursor();
             Console.WriteLine();
 
@@ -231,12 +234,12 @@ namespace CustomTools.Tools
             if (toCompute.Count > 0)
             {
                 int computed = 0;
-                long computedBytes = 0;
                 var computeTotal = toCompute.Count;
-                var computeTotalBytes = toCompute.Sum(candidateIndex => fileSizes[candidates[candidateIndex]]);
+                var computeTotalWork = toCompute.Sum(candidateIndex => GetPhashWork(fileSizes[candidates[candidateIndex]]));
+                var phashEstimator = new ProgressEstimator(computeTotalWork);
                 var phaseTimerPhash = Stopwatch.StartNew();
                 Ansi.HideCursor();
-                Console.Write($"pHash 进度:{Effects.ProgressBar(40, 0)}(0/{computeTotal}) {BuildProgressTime(0, computeTotalBytes, phaseTimerPhash.Elapsed)}");
+                Console.Write($"pHash 进度:{Effects.ProgressBar(40, 0)}(0/{computeTotal}) {phashEstimator.Build(phaseTimerPhash.Elapsed)}");
 
                 Parallel.For(0, computeTotal, parallelOptions, i =>
                 {
@@ -278,16 +281,17 @@ namespace CustomTools.Tools
                     }
 
                     var current = Interlocked.Increment(ref computed);
-                    var currentBytes = Interlocked.Add(ref computedBytes, fileSizes[index]);
                     lock (consoleLock)
                     {
+                        var elapsed = phaseTimerPhash.Elapsed;
+                        phashEstimator.Complete(GetPhashWork(fileSizes[index]));
                         Ansi.ClearCurtLine();
-                        Console.Write($"pHash 进度:{Effects.ProgressBar(40, current / (float)computeTotal)}({current}/{computeTotal}) {BuildProgressTime(currentBytes, computeTotalBytes, phaseTimerPhash.Elapsed)}");
+                        Console.Write($"pHash 进度:{Effects.ProgressBar(40, current / (float)computeTotal)}({current}/{computeTotal}) {phashEstimator.Build(elapsed)}");
                     }
                 });
 
                 Ansi.ClearCurtLine();
-                Console.Write($"pHash 进度:{Effects.ProgressBar(40, 1)}({computeTotal}/{computeTotal}) {BuildProgressTime(computeTotalBytes, computeTotalBytes, phaseTimerPhash.Elapsed)}");
+                Console.Write($"pHash 进度:{Effects.ProgressBar(40, 1)}({computeTotal}/{computeTotal}) {phashEstimator.Build(phaseTimerPhash.Elapsed)}");
                 Ansi.ShowCursor();
                 Console.WriteLine();
             }
@@ -850,15 +854,33 @@ namespace CustomTools.Tools
             return System.Diagnostics.Process.Start(startInfo) ?? throw new InvalidOperationException($"无法启动进程：{fileName}");
         }
 
-        // 由 Codex 修改：按已完成字节数而非文件数量估算剩余时间
+        // 由 Codex 修改：按内容 ID 实际采样读取量估算该阶段工作量
 
-        private static string BuildProgressTime(long completedBytes, long totalBytes, TimeSpan elapsed)
+        private static long EstimateContentIdReadBytes(long fileSize)
         {
-            var remainingBytes = Math.Max(0, totalBytes - completedBytes);
-            var remaining = completedBytes > 0 && remainingBytes > 0
-                ? TimeSpan.FromSeconds(elapsed.TotalSeconds / completedBytes * remainingBytes)
-                : TimeSpan.Zero;
-            return $"已耗时:{FormatTime(elapsed)} 剩余:{FormatTime(remaining)}";
+            const long headSize = 1024 * 1024;
+            const long tailSize = 1024 * 1024;
+            const long sampleSize = 64 * 1024;
+            const long sampleInterval = 8L * 1024 * 1024;
+
+            if (fileSize <= headSize + tailSize)
+            {
+                return Math.Max(1, fileSize);
+            }
+
+            var sampledRange = fileSize - headSize - tailSize;
+            var sampleCount = sampledRange > sampleSize
+                ? (sampledRange - sampleSize) / sampleInterval + 1
+                : 0;
+            return headSize + tailSize + sampleCount * sampleSize;
+        }
+
+        // 由 Codex 修改：pHash 工作量由文件大小和每文件固定开销组成
+
+        private static long GetPhashWork(long fileSize)
+        {
+            const long fixedWork = 128L * 1024 * 1024;
+            return Math.Max(1, fileSize + fixedWork);
         }
 
         private static string FormatTime(TimeSpan time)
@@ -875,6 +897,35 @@ namespace CustomTools.Tools
             if (bytes >= mb) return $"{bytes / (double)mb:F2}M";
             return $"{Math.Max(1, bytes / (double)kb):F0}KB";
         }
+
+        #region 由 Codex 添加：阶段化进度估算器
+
+        private sealed class ProgressEstimator
+        {
+            private readonly long totalWork;
+            private long completedWork;
+
+            public ProgressEstimator(long totalWork)
+            {
+                this.totalWork = Math.Max(0, totalWork);
+            }
+
+            public void Complete(long work)
+            {
+                completedWork = Math.Min(totalWork, completedWork + Math.Max(0, work));
+            }
+
+            public string Build(TimeSpan elapsed)
+            {
+                var remainingWork = Math.Max(0, totalWork - completedWork);
+                var remaining = completedWork > 0 && remainingWork > 0
+                    ? TimeSpan.FromSeconds(elapsed.TotalSeconds / completedWork * remainingWork)
+                    : TimeSpan.Zero;
+                return $"已耗时:{VideoCheck.FormatTime(elapsed)} 剩余:{VideoCheck.FormatTime(remaining)}";
+            }
+        }
+
+        #endregion
 
     }
 
