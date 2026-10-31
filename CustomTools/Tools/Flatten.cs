@@ -24,7 +24,7 @@ namespace CustomTools.Tools
             var search = Task.Run(() =>
             {
                 return FileUtils.SearchFolders(path, 1)
-                .ToDictionary(f => f, f => FileUtils.SearchFiles(f, greed: false)
+                .ToDictionary(f => f, f => FileUtils.SearchFiles(f, greed: true)
                                                     .ToArray());
             });
             Effects.ShowSpinner2Char("Searching", search);
