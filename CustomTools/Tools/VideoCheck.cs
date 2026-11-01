@@ -236,7 +236,14 @@ namespace CustomTools.Tools
             if (toCompute.Count > 0)
             {
                 int computed = 0;
-                var invalidVideos = new ConcurrentBag<string>();
+                using var invalidVideos = new BlockingCollection<string>(new ConcurrentQueue<string>());
+                var recycleThread = new Thread(() => MoveInvalidVideosToRecycleBin(invalidVideos))
+                {
+                    IsBackground = true,
+                    Name = "VideoCheck.RecycleBin"
+                };
+                recycleThread.SetApartmentState(ApartmentState.STA);
+                recycleThread.Start();
                 var computeTotal = toCompute.Count;
                 var computeTotalWork = toCompute.Sum(candidateIndex => GetPhashWork(fileSizes[candidates[candidateIndex]]));
                 var phashEstimator = new ProgressEstimator(computeTotalWork);
@@ -244,70 +251,82 @@ namespace CustomTools.Tools
                 Ansi.HideCursor();
                 Console.Write($"pHash 进度:{Effects.ProgressBar(40, 0)}(0/{computeTotal}) {phashEstimator.Build(phaseTimerPhash.Elapsed)}");
 
-                Parallel.For(0, computeTotal, parallelOptions, i =>
+                try
                 {
-                    var candidateIndex = toCompute[i];
-                    var index = candidates[candidateIndex];
-                    try
+                    Parallel.For(0, computeTotal, parallelOptions, i =>
                     {
-                        // 由 Codex 修改：直接使用连续哈希缓冲区，不再转换为逐帧数组
-
-                        var hashes = ComputePhashes(files[index], durations[index]);
-                        if (hashes.Length == 0)
+                        var candidateIndex = toCompute[i];
+                        var index = candidates[candidateIndex];
+                        try
                         {
-                            throw new NoValidFramesException("未能提取到有效帧");
+                            // 由 Codex 修改：直接使用连续哈希缓冲区，不再转换为逐帧数组
+
+                            var hashes = ComputePhashes(files[index], durations[index]);
+                            if (hashes.Length == 0)
+                            {
+                                throw new NoValidFramesException("未能提取到有效帧");
+                            }
+
+                            results[candidateIndex] = new VideoResult(files[index], durations[index], hashes);
+
+                            var directory = Path.GetFullPath(Path.GetDirectoryName(files[index]) ?? ".");
+                            var cache = caches.TryGetValue(directory, out var dirCache) ? dirCache : null;
+                            var key = idKeys[index];
+                            if (cache != null && key.Length > 0)
+                            {
+                                lock (consoleLock)
+                                {
+                                    var info = new FileInfo(files[index]);
+                                    var entry = new CacheEntry(
+                                        Convert.FromHexString(key),
+                                        info.Length,
+                                        info.LastWriteTimeUtc.Ticks,
+                                        durations[index],
+                                        hashes);
+                                    VideoCheckCache.Append(directory, entry);
+                                    cache.Add(entry);
+                                    dirtyDirs.Add(directory);
+                                }
+                            }
                         }
-
-                        results[candidateIndex] = new VideoResult(files[index], durations[index], hashes);
-
-                        var directory = Path.GetFullPath(Path.GetDirectoryName(files[index]) ?? ".");
-                        var cache = caches.TryGetValue(directory, out var dirCache) ? dirCache : null;
-                        var key = idKeys[index];
-                        if (cache != null && key.Length > 0)
+                        catch (NoValidFramesException ex)
+                        {
+                            invalidVideos.Add(files[index]);
+                            lock (consoleLock)
+                            {
+                                Ansi.ClearCurtLine();
+                                Console.WriteLine($"未提取到有效帧，正在移入回收站：{Path.GetFileName(files[index])} {ex.Message}");
+                            }
+                        }
+                        catch (Exception ex)
                         {
                             lock (consoleLock)
                             {
-                                var info = new FileInfo(files[index]);
-                                cache.Add(new CacheEntry(Convert.FromHexString(key), info.Length, info.LastWriteTimeUtc.Ticks, durations[index], hashes));
-                                dirtyDirs.Add(directory);
-                                VideoCheckCache.Write(directory, cache.ById.Values);
+                                Ansi.ClearCurtLine();
+                                Console.WriteLine($"处理失败：{Path.GetFileName(files[index])} {ex.Message}");
                             }
                         }
-                    }
-                    catch (NoValidFramesException ex)
-                    {
-                        invalidVideos.Add(files[index]);
-                        lock (consoleLock)
-                        {
-                            Ansi.ClearCurtLine();
-                            Console.WriteLine($"未提取到有效帧，将移入回收站：{Path.GetFileName(files[index])} {ex.Message}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        lock (consoleLock)
-                        {
-                            Ansi.ClearCurtLine();
-                            Console.WriteLine($"处理失败：{Path.GetFileName(files[index])} {ex.Message}");
-                        }
-                    }
 
-                    var current = Interlocked.Increment(ref computed);
-                    lock (consoleLock)
-                    {
-                        var elapsed = phaseTimerPhash.Elapsed;
-                        phashEstimator.Complete(GetPhashWork(fileSizes[index]));
-                        Ansi.ClearCurtLine();
-                        Console.Write($"pHash 进度:{Effects.ProgressBar(40, current / (float)computeTotal)}({current}/{computeTotal}) {phashEstimator.Build(elapsed)}");
-                    }
-                });
+                        var current = Interlocked.Increment(ref computed);
+                        lock (consoleLock)
+                        {
+                            var elapsed = phaseTimerPhash.Elapsed;
+                            phashEstimator.Complete(GetPhashWork(fileSizes[index]));
+                            Ansi.ClearCurtLine();
+                            Console.Write($"pHash 进度:{Effects.ProgressBar(40, current / (float)computeTotal)}({current}/{computeTotal}) {phashEstimator.Build(elapsed)}");
+                        }
+                    });
+                }
+                finally
+                {
+                    invalidVideos.CompleteAdding();
+                    recycleThread.Join();
+                }
 
                 Ansi.ClearCurtLine();
                 Console.Write($"pHash 进度:{Effects.ProgressBar(40, 1)}({computeTotal}/{computeTotal}) {phashEstimator.Build(phaseTimerPhash.Elapsed)}");
                 Ansi.ShowCursor();
                 Console.WriteLine();
-
-                MoveInvalidVideosToRecycleBin(invalidVideos);
             }
 
             UpdateCacheFiles(caches, idKeys, files, dirtyDirs);
@@ -430,12 +449,10 @@ namespace CustomTools.Tools
                 }
                 else
                 {
-                    var path = VideoCheckCache.GetCachePath(directory);
-                    if (File.Exists(path))
-                    {
-                        File.Delete(path);
-                    }
+                    VideoCheckCache.Delete(directory);
                 }
+
+                dirtyDirs.Remove(directory);
             }
         }
 
@@ -685,11 +702,12 @@ namespace CustomTools.Tools
 
         #region 由 Codex 添加：清理无有效帧的视频
 
-        private void MoveInvalidVideosToRecycleBin(IEnumerable<string> files)
+        private void MoveInvalidVideosToRecycleBin(BlockingCollection<string> files)
         {
-            foreach (var file in files.Distinct(StringComparer.OrdinalIgnoreCase))
+            var processed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var file in files.GetConsumingEnumerable())
             {
-                if (!File.Exists(file))
+                if (!processed.Add(file) || !File.Exists(file))
                 {
                     continue;
                 }
