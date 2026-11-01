@@ -18,6 +18,11 @@ namespace CustomTools.Tools
     {
         private readonly TreeView treeView = new TreeView();
         private readonly Button deleteButton = new Button();
+
+        // 由 Codex 添加：批量勾选所有分组中除第一个视频外的视频
+
+        private readonly Button selectNonFirstButton = new Button();
+
         private readonly Button cancelButton = new Button();
         private readonly List<VideoGroup> groups;
         private readonly Dictionary<string, TreeNode> nodeByPath = new Dictionary<string, TreeNode>(StringComparer.OrdinalIgnoreCase);
@@ -65,16 +70,26 @@ namespace CustomTools.Tools
             deleteButton.FlatAppearance.BorderColor = Color.FromArgb(110, 110, 110);
             deleteButton.Click += DeleteButton_Click;
 
+            selectNonFirstButton.Text = "选中每组非首个";
+            selectNonFirstButton.Size = new Size(140, 28);
+            selectNonFirstButton.Location = new Point(140, 10);
+            selectNonFirstButton.BackColor = Color.FromArgb(70, 70, 70);
+            selectNonFirstButton.ForeColor = Color.FromArgb(230, 230, 230);
+            selectNonFirstButton.FlatStyle = FlatStyle.Flat;
+            selectNonFirstButton.FlatAppearance.BorderColor = Color.FromArgb(110, 110, 110);
+            selectNonFirstButton.Click += SelectNonFirstButton_Click;
+
             cancelButton.Text = "取消";
             cancelButton.DialogResult = DialogResult.Cancel;
             cancelButton.Size = new Size(90, 28);
-            cancelButton.Location = new Point(140, 10);
+            cancelButton.Location = new Point(290, 10);
             cancelButton.BackColor = Color.FromArgb(70, 70, 70);
             cancelButton.ForeColor = Color.FromArgb(230, 230, 230);
             cancelButton.FlatStyle = FlatStyle.Flat;
             cancelButton.FlatAppearance.BorderColor = Color.FromArgb(110, 110, 110);
 
             bottomPanel.Controls.Add(deleteButton);
+            bottomPanel.Controls.Add(selectNonFirstButton);
             bottomPanel.Controls.Add(cancelButton);
 
             Controls.Add(treeView);
@@ -82,6 +97,19 @@ namespace CustomTools.Tools
             Shown += (_, _) => ApplyDarkTitleBar();
 
             BuildGroups();
+        }
+
+        private void SelectNonFirstButton_Click(object? sender, EventArgs e)
+        {
+            treeView.BeginUpdate();
+            foreach (TreeNode root in treeView.Nodes)
+            {
+                for (int i = 0; i < root.Nodes.Count; i++)
+                {
+                    root.Nodes[i].Checked = i > 0;
+                }
+            }
+            treeView.EndUpdate();
         }
 
         private void BuildGroups()

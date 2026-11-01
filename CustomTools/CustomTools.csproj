@@ -16,7 +16,9 @@
 		<!-- 由 Codex 修改：按剩余文件总大小估算视频查重剩余时间 -->
 		<!-- 由 Codex 修改：改用阶段化工作量估算视频查重剩余时间 -->
 		<!-- 由 Codex 修改：无效帧文件移入回收站并增加缓存原子写入保护 -->
-		<FileVersion>1.12.67</FileVersion>
+		<!-- 由 Codex 修改：新增增量缓存日志并即时回收无效帧视频 -->
+		<!-- 由 Codex 修改：新增批量勾选每组非首个视频按钮 -->
+		<FileVersion>1.12.69</FileVersion>
 
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
