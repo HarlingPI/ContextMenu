@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace CustomTools.Tools
 {
@@ -145,6 +146,8 @@ namespace CustomTools.Tools
 
         public static DirectoryCache Load(string directory)
         {
+            CleanupStaleTemporaryFiles(directory);
+
             var cache = new DirectoryCache();
             var path = GetCachePath(directory);
             if (!File.Exists(path))
@@ -211,29 +214,82 @@ namespace CustomTools.Tools
         public static void Write(string directory, IEnumerable<CacheEntry> entries)
         {
             var path = GetCachePath(directory);
+            var temporaryPath = Path.Combine(
+                directory,
+                $".phash.cache.{Environment.ProcessId}.{Guid.NewGuid():N}.tmp");
             var list = entries as ICollection<CacheEntry> ?? new List<CacheEntry>(entries);
-            using var stream = File.Create(path);
-            using var writer = new BinaryWriter(stream);
-            writer.Write(Magic);
-            writer.Write(5);
-            writer.Write(list.Count);
 
-            foreach (var entry in list)
+            // 由 Codex 修改：先写临时文件并落盘，再原子替换正式缓存
+
+            try
             {
-                writer.Write(entry.Id);
-                writer.Write(entry.Length);
-                writer.Write(entry.LastWriteTimeTicks);
-                writer.Write(entry.Duration);
-
-                // 由 Codex 修改：连续哈希按帧数写入，保持原有缓存文件格式
-
-                if (entry.Hashes.Length % HashLength != 0)
+                using (var stream = new FileStream(
+                    temporaryPath,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.None,
+                    1024 * 1024,
+                    FileOptions.SequentialScan))
                 {
-                    throw new InvalidDataException("pHashes 长度不是单个哈希长度的整数倍");
+                    using (var writer = new BinaryWriter(stream, Encoding.UTF8, true))
+                    {
+                        writer.Write(Magic);
+                        writer.Write(5);
+                        writer.Write(list.Count);
+
+                        foreach (var entry in list)
+                        {
+                            writer.Write(entry.Id);
+                            writer.Write(entry.Length);
+                            writer.Write(entry.LastWriteTimeTicks);
+                            writer.Write(entry.Duration);
+
+                            // 由 Codex 修改：连续哈希按帧数写入，保持原有缓存文件格式
+
+                            if (entry.Hashes.Length % HashLength != 0)
+                            {
+                                throw new InvalidDataException("pHashes 长度不是单个哈希长度的整数倍");
+                            }
+
+                            writer.Write(entry.Hashes.Length / HashLength);
+                            writer.Write(entry.Hashes);
+                        }
+
+                        writer.Flush();
+                    }
+
+                    stream.Flush(true);
                 }
 
-                writer.Write(entry.Hashes.Length / HashLength);
-                writer.Write(entry.Hashes);
+                File.Move(temporaryPath, path, true);
+            }
+            finally
+            {
+                if (File.Exists(temporaryPath))
+                {
+                    File.Delete(temporaryPath);
+                }
+            }
+        }
+
+        // 由 Codex 修改：清理异常退出遗留的旧临时缓存文件
+
+        private static void CleanupStaleTemporaryFiles(string directory)
+        {
+            try
+            {
+                var cutoff = DateTime.UtcNow.AddHours(-1);
+                foreach (var temporaryPath in Directory.EnumerateFiles(directory, ".phash.cache.*.tmp"))
+                {
+                    if (File.GetLastWriteTimeUtc(temporaryPath) < cutoff)
+                    {
+                        File.Delete(temporaryPath);
+                    }
+                }
+            }
+            catch
+            {
+                // 临时文件清理失败不影响正式缓存加载
             }
         }
 

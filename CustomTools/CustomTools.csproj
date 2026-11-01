@@ -15,7 +15,8 @@
 		<!-- 由 Codex 修改：新增机械硬盘与固态硬盘差异化并行配置 -->
 		<!-- 由 Codex 修改：按剩余文件总大小估算视频查重剩余时间 -->
 		<!-- 由 Codex 修改：改用阶段化工作量估算视频查重剩余时间 -->
-		<FileVersion>1.12.66</FileVersion>
+		<!-- 由 Codex 修改：无效帧文件移入回收站并增加缓存原子写入保护 -->
+		<FileVersion>1.12.67</FileVersion>
 
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>

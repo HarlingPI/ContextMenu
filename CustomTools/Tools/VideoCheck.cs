@@ -2,9 +2,11 @@
 
 #region 由 Codex 添加
 using ConsoleKit;
+using Microsoft.VisualBasic.FileIO;
 using PIToolKit.Public.Utils;
 using System;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -234,6 +236,7 @@ namespace CustomTools.Tools
             if (toCompute.Count > 0)
             {
                 int computed = 0;
+                var invalidVideos = new ConcurrentBag<string>();
                 var computeTotal = toCompute.Count;
                 var computeTotalWork = toCompute.Sum(candidateIndex => GetPhashWork(fileSizes[candidates[candidateIndex]]));
                 var phashEstimator = new ProgressEstimator(computeTotalWork);
@@ -252,7 +255,7 @@ namespace CustomTools.Tools
                         var hashes = ComputePhashes(files[index], durations[index]);
                         if (hashes.Length == 0)
                         {
-                            throw new InvalidOperationException("未能提取到有效帧");
+                            throw new NoValidFramesException("未能提取到有效帧");
                         }
 
                         results[candidateIndex] = new VideoResult(files[index], durations[index], hashes);
@@ -269,6 +272,15 @@ namespace CustomTools.Tools
                                 dirtyDirs.Add(directory);
                                 VideoCheckCache.Write(directory, cache.ById.Values);
                             }
+                        }
+                    }
+                    catch (NoValidFramesException ex)
+                    {
+                        invalidVideos.Add(files[index]);
+                        lock (consoleLock)
+                        {
+                            Ansi.ClearCurtLine();
+                            Console.WriteLine($"未提取到有效帧，将移入回收站：{Path.GetFileName(files[index])} {ex.Message}");
                         }
                     }
                     catch (Exception ex)
@@ -294,6 +306,8 @@ namespace CustomTools.Tools
                 Console.Write($"pHash 进度:{Effects.ProgressBar(40, 1)}({computeTotal}/{computeTotal}) {phashEstimator.Build(phaseTimerPhash.Elapsed)}");
                 Ansi.ShowCursor();
                 Console.WriteLine();
+
+                MoveInvalidVideosToRecycleBin(invalidVideos);
             }
 
             UpdateCacheFiles(caches, idKeys, files, dirtyDirs);
@@ -640,7 +654,7 @@ namespace CustomTools.Tools
                 {
                     if (total > 0)
                     {
-                        throw new InvalidOperationException("帧数据不完整");
+                        throw new NoValidFramesException("帧数据不完整");
                     }
                     break;
                 }
@@ -653,7 +667,7 @@ namespace CustomTools.Tools
             var error = errorTask.Result;
             if (process.ExitCode != 0)
             {
-                throw new InvalidOperationException(error.Trim());
+                throw new NoValidFramesException(error.Trim());
             }
 
             return hashes.WrittenSpan.ToArray();
@@ -668,6 +682,41 @@ namespace CustomTools.Tools
             }
             Console.WriteLine("硬件解码不可用，已自动回退 CPU 解码");
         }
+
+        #region 由 Codex 添加：清理无有效帧的视频
+
+        private void MoveInvalidVideosToRecycleBin(IEnumerable<string> files)
+        {
+            foreach (var file in files.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (!File.Exists(file))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    FileSystem.DeleteFile(
+                        file,
+                        UIOption.OnlyErrorDialogs,
+                        RecycleOption.SendToRecycleBin,
+                        UICancelOption.ThrowException);
+                    lock (consoleLock)
+                    {
+                        Console.WriteLine($"已移入回收站：{file}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    lock (consoleLock)
+                    {
+                        Console.WriteLine($"移入回收站失败：{file} {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        #endregion
 
         #region 由 Codex 添加：磁盘类型并行数量解析
 
@@ -922,6 +971,18 @@ namespace CustomTools.Tools
                     ? TimeSpan.FromSeconds(elapsed.TotalSeconds / completedWork * remainingWork)
                     : TimeSpan.Zero;
                 return $"已耗时:{VideoCheck.FormatTime(elapsed)} 剩余:{VideoCheck.FormatTime(remaining)}";
+            }
+        }
+
+        #endregion
+
+        #region 由 Codex 添加：无有效帧异常
+
+        private sealed class NoValidFramesException : Exception
+        {
+            public NoValidFramesException(string message)
+                : base(message)
+            {
             }
         }
 
