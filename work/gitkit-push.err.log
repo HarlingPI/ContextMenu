@@ -1,0 +1,4 @@
+Unhandled exception. System.IO.IOException: ¾ä±úÎÞÐ§¡£
+   at System.ConsolePal.GetBufferInfo(Boolean throwOnNoConsole, Boolean& succeeded)
+   at System.Console.set_BufferHeight(Int32 value)
+   at GitKit.Program.Main(String[] args) in D:\Projects\PIToolKit\ContextMenu\GitKit\Program.cs:line 34
