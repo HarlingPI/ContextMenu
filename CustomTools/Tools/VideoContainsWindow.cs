@@ -154,7 +154,9 @@ namespace CustomTools.Tools
                         $"源视频：{Path.GetFileName(group.SourceFile)}（{FormatTime(group.SourceDuration)}，包含 {group.Items.Count} 个）")
                     {
                         Tag = group,
-                        ToolTipText = group.SourceFile
+                        ToolTipText = group.SourceFile,
+                        // 由 Codex 修改：源文件父节点始终不允许勾选
+                        Checked = false
                     };
 
                     foreach (var item in group.Items.OrderByDescending(result => result.Confidence))
@@ -195,10 +197,24 @@ namespace CustomTools.Tools
                 updatingChecks = true;
                 try
                 {
+                    var checkedState = e.Node.Checked;
                     foreach (TreeNode child in e.Node.Nodes)
                     {
-                        child.Checked = e.Node.Checked;
+                        child.Checked = checkedState;
                     }
+                    e.Node.Checked = false;
+                }
+                finally
+                {
+                    updatingChecks = false;
+                }
+            }
+            else if (e.Node.Parent.Checked)
+            {
+                updatingChecks = true;
+                try
+                {
+                    e.Node.Parent.Checked = false;
                 }
                 finally
                 {
@@ -221,7 +237,7 @@ namespace CustomTools.Tools
             treeView.BeginUpdate();
             try
             {
-                node.Checked = true;
+                node.Checked = false;
                 foreach (TreeNode child in node.Nodes)
                 {
                     child.Checked = true;

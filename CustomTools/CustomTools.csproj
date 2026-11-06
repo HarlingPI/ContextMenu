@@ -30,7 +30,8 @@
 		<!-- 由 Codex 修改：使用低分辨率时间轴复核包含位置并过滤误报 -->
 		<!-- 由 Codex 修改：包含查询增加剩余时间并调整结果树双击行为 -->
 		<!-- 由 Codex 修改：包含查询结果默认选中全部子节点 -->
-		<FileVersion>1.13.11</FileVersion>
+		<!-- 由 Codex 修改：包含查询父节点始终保持未勾选 -->
+		<FileVersion>1.13.12</FileVersion>
 
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
