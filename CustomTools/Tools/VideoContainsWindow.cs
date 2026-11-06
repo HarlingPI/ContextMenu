@@ -163,7 +163,9 @@ namespace CustomTools.Tools
                             $"{Path.GetFileName(item.FilePath)}  源内位置 {FormatTime(item.MatchStartSeconds)}  置信度 {item.Confidence:P1}  距离 {item.AverageDistance:F1}")
                         {
                             Tag = item,
-                            ToolTipText = item.FilePath
+                            ToolTipText = item.FilePath,
+                            // 由 Codex 修改：结果窗口默认选中分组内全部子节点
+                            Checked = true
                         };
                         root.Nodes.Add(node);
                     }
