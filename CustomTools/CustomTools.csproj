@@ -18,7 +18,18 @@
 		<!-- 由 Codex 修改：无效帧文件移入回收站并增加缓存原子写入保护 -->
 		<!-- 由 Codex 修改：新增增量缓存日志并即时回收无效帧视频 -->
 		<!-- 由 Codex 修改：新增批量勾选每组非首个视频按钮 -->
-		<FileVersion>1.12.69</FileVersion>
+		<!-- 由 Codex 修改：新增视频包含查询菜单与图标 -->
+		<!-- 由 Codex 修改：修正视频包含查询为源视频包含较短视频 -->
+		<!-- 由 Codex 修改：统一视频包含查询图标风格并切换全局批量包含扫描 -->
+		<!-- 由 Codex 修改：包含查询结果支持播放、勾选和批量删除 -->
+		<!-- 由 Codex 修改：结果窗口关闭后输出删除统计并自动关闭控制台 -->
+		<!-- 由 Codex 修改：包含查询忽略全零哈希并移除哈希种类硬门槛 -->
+		<!-- 由 Codex 修改：包含查询结果树增加打开视频和复制节点信息右键菜单 -->
+		<!-- 由 Codex 修改：删除包含查询文件后同步移除对应 pHash 缓存 -->
+		<!-- 由 Codex 修改：包含查询窗口关闭后合并 pHash 增量缓存 -->
+		<!-- 由 Codex 修改：使用低分辨率时间轴复核包含位置并过滤误报 -->
+		<!-- 由 Codex 修改：包含查询增加剩余时间并调整结果树双击行为 -->
+		<FileVersion>1.13.10</FileVersion>
 
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
@@ -32,6 +43,8 @@
 		<Content Include="Resources\VideoCheck.ico" />
 		<!-- 由 Codex 添加 -->
 		<Content Include="Resources\Settings.ico" />
+		<!-- 由 Codex 添加：视频包含查询菜单图标 -->
+		<Content Include="Resources\VideoContainsQuery.ico" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\..\NotNet\ConsoleKit\ConsoleKit.csproj" />

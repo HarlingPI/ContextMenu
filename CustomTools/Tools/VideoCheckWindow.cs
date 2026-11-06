@@ -27,6 +27,13 @@ namespace CustomTools.Tools
         private readonly List<VideoGroup> groups;
         private readonly Dictionary<string, TreeNode> nodeByPath = new Dictionary<string, TreeNode>(StringComparer.OrdinalIgnoreCase);
 
+        #region 由 Codex 添加：重复视频统计
+
+        private readonly Label summaryLabel = new Label();
+        private bool updatingChecks;
+
+        #endregion
+
         public List<string> SelectedFiles { get; } = new List<string>();
         public int DeletedCount { get; private set; }
         public long DeletedBytes { get; private set; }
@@ -51,19 +58,27 @@ namespace CustomTools.Tools
             treeView.ForeColor = Color.FromArgb(230, 230, 230);
             treeView.NodeMouseClick += TreeView_NodeMouseClick;
             treeView.AfterSelect += TreeView_AfterSelect;
+            treeView.AfterCheck += TreeView_AfterCheck;
             HandleCreated += (_, _) => ApplyDarkTitleBar();
 
             var bottomPanel = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 48,
+                Height = 76,
                 Padding = new Padding(10),
                 BackColor = Color.FromArgb(44, 44, 44)
             };
 
+            // 由 Codex 修改：在按钮上方显示重复组和当前选中数量
+
+            summaryLabel.Dock = DockStyle.Top;
+            summaryLabel.Height = 24;
+            summaryLabel.TextAlign = ContentAlignment.MiddleLeft;
+            summaryLabel.ForeColor = Color.FromArgb(210, 210, 210);
+
             deleteButton.Text = "删除选中项";
             deleteButton.Size = new Size(120, 28);
-            deleteButton.Location = new Point(10, 10);
+            deleteButton.Location = new Point(10, 36);
             deleteButton.BackColor = Color.FromArgb(70, 70, 70);
             deleteButton.ForeColor = Color.FromArgb(230, 230, 230);
             deleteButton.FlatStyle = FlatStyle.Flat;
@@ -72,7 +87,7 @@ namespace CustomTools.Tools
 
             selectNonFirstButton.Text = "选中每组非首个";
             selectNonFirstButton.Size = new Size(140, 28);
-            selectNonFirstButton.Location = new Point(140, 10);
+            selectNonFirstButton.Location = new Point(140, 36);
             selectNonFirstButton.BackColor = Color.FromArgb(70, 70, 70);
             selectNonFirstButton.ForeColor = Color.FromArgb(230, 230, 230);
             selectNonFirstButton.FlatStyle = FlatStyle.Flat;
@@ -82,12 +97,13 @@ namespace CustomTools.Tools
             cancelButton.Text = "取消";
             cancelButton.DialogResult = DialogResult.Cancel;
             cancelButton.Size = new Size(90, 28);
-            cancelButton.Location = new Point(290, 10);
+            cancelButton.Location = new Point(290, 36);
             cancelButton.BackColor = Color.FromArgb(70, 70, 70);
             cancelButton.ForeColor = Color.FromArgb(230, 230, 230);
             cancelButton.FlatStyle = FlatStyle.Flat;
             cancelButton.FlatAppearance.BorderColor = Color.FromArgb(110, 110, 110);
 
+            bottomPanel.Controls.Add(summaryLabel);
             bottomPanel.Controls.Add(deleteButton);
             bottomPanel.Controls.Add(selectNonFirstButton);
             bottomPanel.Controls.Add(cancelButton);
@@ -101,15 +117,25 @@ namespace CustomTools.Tools
 
         private void SelectNonFirstButton_Click(object? sender, EventArgs e)
         {
+            var previousUpdatingChecks = updatingChecks;
+            updatingChecks = true;
             treeView.BeginUpdate();
-            foreach (TreeNode root in treeView.Nodes)
+            try
             {
-                for (int i = 0; i < root.Nodes.Count; i++)
+                foreach (TreeNode root in treeView.Nodes)
                 {
-                    root.Nodes[i].Checked = i > 0;
+                    for (int i = 0; i < root.Nodes.Count; i++)
+                    {
+                        root.Nodes[i].Checked = i > 0;
+                    }
                 }
             }
-            treeView.EndUpdate();
+            finally
+            {
+                treeView.EndUpdate();
+                updatingChecks = previousUpdatingChecks;
+            }
+            UpdateSummaryLabel();
         }
 
         private void BuildGroups()
@@ -137,7 +163,28 @@ namespace CustomTools.Tools
 
             treeView.EndUpdate();
             treeView.ExpandAll();
+            UpdateSummaryLabel();
         }
+
+        #region 由 Codex 添加：重复视频统计刷新
+
+        private void UpdateSummaryLabel()
+        {
+            var possibleDuplicates = groups.Sum(group => group.Items.Count);
+            var selectedCount = nodeByPath.Values.Count(node => node.Checked);
+            summaryLabel.Text =
+                $"重复组：{groups.Count} 个    可能重复视频：{possibleDuplicates} 个    当前选中：{selectedCount} 个";
+        }
+
+        private void TreeView_AfterCheck(object? sender, TreeViewEventArgs e)
+        {
+            if (!updatingChecks)
+            {
+                UpdateSummaryLabel();
+            }
+        }
+
+        #endregion
 
         private void DeleteButton_Click(object? sender, EventArgs e)
         {
@@ -261,11 +308,23 @@ namespace CustomTools.Tools
             // 选中分组时，默认勾选除第一个文件外的所有文件
             if (e.Node != null && e.Node.Parent == null)
             {
-                var nodes = e.Node.Nodes;
-                for (int i = 0; i < nodes.Count; i++)
+                var previousUpdatingChecks = updatingChecks;
+                updatingChecks = true;
+                treeView.BeginUpdate();
+                try
                 {
-                    nodes[i].Checked = i > 0;
+                    var nodes = e.Node.Nodes;
+                    for (int i = 0; i < nodes.Count; i++)
+                    {
+                        nodes[i].Checked = i > 0;
+                    }
                 }
+                finally
+                {
+                    treeView.EndUpdate();
+                    updatingChecks = previousUpdatingChecks;
+                }
+                UpdateSummaryLabel();
             }
         }
 

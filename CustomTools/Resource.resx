@@ -147,4 +147,8 @@
   <data name="Settings" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Settings.ico;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <!-- 由 Codex 添加：视频包含查询菜单图标 -->
+  <data name="VideoContainsQuery" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\VideoContainsQuery.ico;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

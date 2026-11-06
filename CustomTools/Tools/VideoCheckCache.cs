@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -64,6 +65,20 @@ namespace CustomTools.Tools
         {
             ById.Remove(idKey);
             RemoveFromSignature(idKey, signatureKey);
+        }
+
+        // 由 Codex 修改：增量删除记录只需要内容 ID
+        public void RemoveById(string idKey)
+        {
+            if (ById.Remove(idKey, out var entry))
+            {
+                RemoveFromSignature(
+                    idKey,
+                    VideoCheckCache.SignatureKey(
+                        entry.Length,
+                        entry.LastWriteTimeTicks,
+                        entry.Duration));
+            }
         }
 
         private void RemoveFromSignature(string idKey, string signatureKey)
@@ -284,15 +299,22 @@ namespace CustomTools.Tools
                             break;
                         }
 
-                        var payloadLength = reader.ReadInt32();
-                        if (payloadLength < DeltaPayloadFixedSize ||
+                        var payloadLengthField = reader.ReadInt32();
+                        var isDeletion = payloadLengthField < 0;
+                        var payloadLength = isDeletion
+                            ? -(long)payloadLengthField
+                            : payloadLengthField;
+                        var minimumPayloadLength = isDeletion
+                            ? IdLength
+                            : DeltaPayloadFixedSize;
+                        if (payloadLength < minimumPayloadLength ||
                             payloadLength > originalLength - stream.Position - DeltaChecksumSize)
                         {
                             break;
                         }
 
                         var checksum = reader.ReadBytes(DeltaChecksumSize);
-                        var payload = reader.ReadBytes(payloadLength);
+                        var payload = reader.ReadBytes((int)payloadLength);
                         if (checksum.Length != DeltaChecksumSize ||
                             payload.Length != payloadLength)
                         {
@@ -300,13 +322,27 @@ namespace CustomTools.Tools
                         }
 
                         var actualChecksum = SHA256.HashData(payload);
-                        if (!CryptographicOperations.FixedTimeEquals(checksum, actualChecksum) ||
-                            !TryReadDeltaEntry(payload, out var entry))
+                        if (!CryptographicOperations.FixedTimeEquals(checksum, actualChecksum))
                         {
                             break;
                         }
 
-                        cache.Add(entry);
+                        if (isDeletion)
+                        {
+                            if (!TryReadDeltaDeletion(payload, out var deletedId))
+                            {
+                                break;
+                            }
+                            cache.RemoveById(ToKey(deletedId));
+                        }
+                        else
+                        {
+                            if (!TryReadDeltaEntry(payload, out var entry))
+                            {
+                                break;
+                            }
+                            cache.Add(entry);
+                        }
                         lastValidPosition = stream.Position;
                     }
                 }
@@ -323,6 +359,18 @@ namespace CustomTools.Tools
             {
                 // 增量日志读取失败时保留正式缓存，后续可以重新生成
             }
+        }
+
+        private static bool TryReadDeltaDeletion(byte[] payload, out byte[] id)
+        {
+            id = Array.Empty<byte>();
+            if (payload.Length != IdLength)
+            {
+                return false;
+            }
+
+            id = payload;
+            return true;
         }
 
         private static bool TryReadDeltaEntry(byte[] payload, out CacheEntry entry)
@@ -381,9 +429,55 @@ namespace CustomTools.Tools
                 payloadWriter.Flush();
             }
 
+            AppendDeltaRecord(
+                directory,
+                payloadHeader,
+                entry.Hashes,
+                false);
+        }
+
+        // 由 Codex 修改：删除缓存时只追加小型墓碑记录，不重写正式缓存
+        public static void RemoveEntries(
+            string directory,
+            IEnumerable<(long Length, long Ticks)> identities)
+        {
+            var identitySet = identities.ToHashSet();
+            if (identitySet.Count == 0)
+            {
+                return;
+            }
+
+            var cache = Load(directory);
+            var deletedIds = new HashSet<string>(StringComparer.Ordinal);
+            deletedIds.UnionWith(cache.ById.Values
+                .Where(entry => identitySet.Contains((entry.Length, entry.LastWriteTimeTicks)))
+                .Select(entry => ToKey(entry.Id)));
+
+            if (deletedIds.Count == 0)
+            {
+                return;
+            }
+            if (deletedIds.Count == cache.ById.Count)
+            {
+                Delete(directory);
+                return;
+            }
+
+            foreach (var entry in cache.ById.Values.Where(entry => deletedIds.Contains(ToKey(entry.Id))))
+            {
+                AppendDeltaRecord(directory, entry.Id, Array.Empty<byte>(), true);
+            }
+        }
+
+        private static void AppendDeltaRecord(
+            string directory,
+            byte[] payloadHeader,
+            byte[] payloadBody,
+            bool isDeletion)
+        {
             using var checksum = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
             checksum.AppendData(payloadHeader);
-            checksum.AppendData(entry.Hashes);
+            checksum.AppendData(payloadBody);
             var checksumBytes = checksum.GetHashAndReset();
 
             var path = GetDeltaPath(directory);
@@ -419,11 +513,11 @@ namespace CustomTools.Tools
             var recordStart = stream.Position;
             try
             {
-                var payloadLength = DeltaPayloadFixedSize + entry.Hashes.Length;
-                writer.Write(payloadLength);
+                var payloadLength = payloadHeader.Length + payloadBody.Length;
+                writer.Write(isDeletion ? -payloadLength : payloadLength);
                 writer.Write(checksumBytes);
                 writer.Write(payloadHeader);
-                writer.Write(entry.Hashes);
+                writer.Write(payloadBody);
                 writer.Flush();
                 stream.Flush(true);
             }
@@ -439,6 +533,26 @@ namespace CustomTools.Tools
         {
             File.Delete(GetCachePath(directory));
             File.Delete(GetDeltaPath(directory));
+        }
+
+        // 由 Codex 修改：将增量日志中的新增和删除记录合并进正式缓存
+        public static bool Compact(string directory)
+        {
+            if (!File.Exists(GetDeltaPath(directory)))
+            {
+                return false;
+            }
+
+            var cache = Load(directory);
+            if (cache.ById.Count > 0)
+            {
+                Write(directory, cache.ById.Values);
+            }
+            else
+            {
+                Delete(directory);
+            }
+            return true;
         }
 
         public static void Write(string directory, IEnumerable<CacheEntry> entries)

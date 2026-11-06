@@ -515,6 +515,20 @@ namespace CustomTools.Tools
             return double.TryParse(output.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? value : 0;
         }
 
+        #region 由 Codex 添加：视频包含查询复用接口
+
+        internal double GetDurationForContainment(string file)
+        {
+            return GetDuration(file);
+        }
+
+        internal byte[] ComputePhashesForContainment(string file, double duration)
+        {
+            return ComputePhashes(file, duration);
+        }
+
+        #endregion
+
         // 由 Codex 修改：所有帧哈希使用连续 byte[]，每个哈希固定为 VideoCheckCache.HashLength 字节
 
         private byte[] ComputeKeyframePhashes(string file, double duration)

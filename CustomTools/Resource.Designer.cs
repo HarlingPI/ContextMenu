@@ -152,6 +152,16 @@ namespace CustomTools {
             }
         }
 
+        /// <summary>
+        ///   查找 System.Byte[] 类型的本地化资源。
+        /// </summary>
+        internal static byte[] VideoContainsQuery {
+            get {
+                object obj = ResourceManager.GetObject("VideoContainsQuery", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+
         #endregion
     }
 }
