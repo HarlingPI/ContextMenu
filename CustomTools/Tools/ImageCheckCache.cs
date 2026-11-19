@@ -153,6 +153,24 @@ namespace CustomTools.Tools
             return File.Exists(GetDeltaPath(directory));
         }
 
+        public static bool HasCacheFiles(string directory)
+        {
+            if (File.Exists(GetCachePath(directory)) ||
+                File.Exists(GetDeltaPath(directory)))
+            {
+                return true;
+            }
+
+            try
+            {
+                return Directory.EnumerateFiles(directory, ".image.phash.cache.*.tmp").Any();
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public static string ToKey(byte[] id)
         {
             return Convert.ToHexString(id);
@@ -519,6 +537,16 @@ namespace CustomTools.Tools
         {
             File.Delete(GetCachePath(directory));
             File.Delete(GetDeltaPath(directory));
+        }
+
+        public static void DeleteOrphanFiles(string directory)
+        {
+            File.Delete(GetCachePath(directory));
+            File.Delete(GetDeltaPath(directory));
+            foreach (var path in Directory.EnumerateFiles(directory, ".image.phash.cache.*.tmp"))
+            {
+                File.Delete(path);
+            }
         }
 
         private static void CleanupStaleTemporaryFiles(string directory)

@@ -59,6 +59,11 @@ namespace CustomTools.Tools
             var files = searchTask.Result
                 .OrderBy(file => new FileInfo(file).Length)
                 .ToArray();
+
+            // 由 GPT-5 修改：清理已无图片目录残留的正式缓存、增量日志和临时文件
+
+            CleanupOrphanCaches(path);
+
             Console.WriteLine($"发现 {files.Length} 个图片文件");
 
             if (files.Length == 0)
@@ -72,84 +77,142 @@ namespace CustomTools.Tools
                 return;
             }
 
-            // 由 GPT-5 修改：图片 pHash 使用签名、内容 ID、pHash 三级缓存，与文件名无关
+            // 由 GPT-5 修改：按视频查重的三段格式输出内容 ID、缓存检查和 pHash 进度
 
             var fileInfos = files.Select(file => new FileInfo(file)).ToArray();
             var fileSizes = fileInfos.Select(info => info.Length).ToArray();
-            var fileWriteTicks = fileInfos.Select(info => info.LastWriteTimeUtc.Ticks).ToArray();
+            var contentIdWork = fileSizes.Select(GetContentIdWork).ToArray();
             var caches = LoadImageCaches(files);
             var dirtyDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var contentIds = new byte[]?[files.Length];
-            var results = new ImageResult?[files.Length];
-            var toCompute = new List<int>();
-            var signatureHits = 0;
-            var contentIdHits = 0;
-            var failedCount = 0;
-            for (var i = 0; i < files.Length; i++)
-            {
-                var directory = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
-                var cache = caches[directory];
-                if (cache.TryGetUniqueBySignature(fileInfos[i], out var entry))
-                {
-                    contentIds[i] = entry.Id;
-                    results[i] = new ImageResult(files[i], entry.Hash);
-                    signatureHits++;
-                }
-                else
-                {
-                    try
-                    {
-                        var contentId = ImageCheckCache.ComputeContentId(files[i]);
-                        contentIds[i] = contentId;
-                        if (cache.TryGetById(contentId, out entry))
-                        {
-                            results[i] = new ImageResult(files[i], entry.Hash);
-                            var updatedEntry = new ImageCacheEntry(
-                                contentId,
-                                fileSizes[i],
-                                fileWriteTicks[i],
-                                entry.Hash);
-                            try
-                            {
-                                ImageCheckCache.Append(directory, updatedEntry);
-                                cache.Add(updatedEntry);
-                                dirtyDirs.Add(directory);
-                            }
-                            catch (Exception cacheException)
-                            {
-                                Console.WriteLine($"图片 pHash 增量缓存写入失败：{Path.GetFileName(files[i])} {cacheException.Message}");
-                            }
-                            contentIdHits++;
-                        }
-                        else
-                        {
-                            toCompute.Add(i);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        failedCount++;
-                        Console.WriteLine($"读取图片内容 ID 失败：{Path.GetFileName(files[i])} {ex.Message}");
-                    }
-                }
-            }
-
-            Console.WriteLine(
-                $"图片 pHash 三级缓存：签名命中 {signatureHits}，内容 ID 命中 {contentIdHits}，需要计算 {toCompute.Count}");
-
-            var totalWork = toCompute.Sum(index => GetHashWork(fileSizes[index]));
-            var completed = 0;
-            var estimator = new ProgressEstimator(totalWork);
-            var timer = Stopwatch.StartNew();
+            var signatureHitFlags = new bool[files.Length];
             var parallelOptions = new ParallelOptions
             {
                 MaxDegreeOfParallelism = parallelism
             };
 
+            // 阶段1：签名缓存快查，再为未命中的图片计算内容 ID
+            var signatureHits = 0;
+            for (var i = 0; i < files.Length; i++)
+            {
+                var directory = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
+                if (caches[directory].TryGetUniqueBySignature(fileInfos[i], out var entry))
+                {
+                    contentIds[i] = entry.Id;
+                    signatureHitFlags[i] = true;
+                    signatureHits++;
+                }
+            }
+
+            var pendingIdIndices = Enumerable.Range(0, files.Length)
+                .Where(i => contentIds[i] == null)
+                .ToArray();
+            Console.WriteLine(
+                $"签名缓存命中：{signatureHits}/{files.Length}，需要计算内容 ID：{pendingIdIndices.Length}/{files.Length}");
+
+            var failedCount = 0;
+            if (pendingIdIndices.Length > 0)
+            {
+                var idCompleted = 0;
+                var pendingContentIdWork = pendingIdIndices.Sum(i => contentIdWork[i]);
+                var contentIdEstimator = new ProgressEstimator(pendingContentIdWork);
+                var phaseTimerId = Stopwatch.StartNew();
+                Ansi.HideCursor();
+                Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 0)}(0/{pendingIdIndices.Length}) {contentIdEstimator.Build(phaseTimerId.Elapsed)}");
+                Parallel.For(0, pendingIdIndices.Length, parallelOptions, pendingIndex =>
+                {
+                    var i = pendingIdIndices[pendingIndex];
+                    try
+                    {
+                        contentIds[i] = ImageCheckCache.ComputeContentId(files[i]);
+                    }
+                    catch
+                    {
+                        contentIds[i] = null;
+                        Interlocked.Increment(ref failedCount);
+                    }
+
+                    var current = Interlocked.Increment(ref idCompleted);
+                    lock (consoleLock)
+                    {
+                        contentIdEstimator.Complete(contentIdWork[i]);
+                        Ansi.ClearCurtLine();
+                        Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, current / (float)pendingIdIndices.Length)}({current}/{pendingIdIndices.Length}) {contentIdEstimator.Build(phaseTimerId.Elapsed)}");
+                    }
+                });
+                Ansi.ClearCurtLine();
+                Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 1)}({pendingIdIndices.Length}/{pendingIdIndices.Length}) {contentIdEstimator.Build(phaseTimerId.Elapsed)}");
+                Ansi.ShowCursor();
+                Console.WriteLine();
+            }
+            else
+            {
+                Console.WriteLine("内容 ID：全部命中签名缓存，无需计算");
+            }
+
+            // 阶段2：图片没有时长字段，所有有效文件都进入 pHash 比较
+            var candidates = Enumerable.Range(0, files.Length)
+                .Where(i => contentIds[i] != null)
+                .ToArray();
+            Console.WriteLine($"图片初筛后需要计算 pHash 的图片：{candidates.Length}/{files.Length}");
+            if (candidates.Length < 2)
+            {
+                UpdateImageCaches(caches, files, contentIds, dirtyDirs);
+                MessageBox.Show(
+                    "无法对少于两个有效图片进行比较。",
+                    "图片查重",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                AutoCloseConsole();
+                return;
+            }
+
+            // 阶段3：先检查内容 ID 对应的 pHash 缓存，再计算未命中的图片
+            var results = new ImageResult?[files.Length];
+            var toCompute = new List<int>();
+            for (var candidateIndex = 0; candidateIndex < candidates.Length; candidateIndex++)
+            {
+                var index = candidates[candidateIndex];
+                var directory = Path.GetFullPath(Path.GetDirectoryName(files[index]) ?? ".");
+                var cache = caches[directory];
+                var contentId = contentIds[index]!;
+                if (cache.TryGetById(contentId, out var entry))
+                {
+                    results[index] = new ImageResult(files[index], entry.Hash);
+                    if (!signatureHitFlags[index])
+                    {
+                        var updatedEntry = new ImageCacheEntry(
+                            contentId,
+                            fileSizes[index],
+                            fileInfos[index].LastWriteTimeUtc.Ticks,
+                            entry.Hash);
+                        try
+                        {
+                            ImageCheckCache.Append(directory, updatedEntry);
+                            cache.Add(updatedEntry);
+                            dirtyDirs.Add(directory);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"图片 pHash 增量缓存写入失败：{Path.GetFileName(files[index])} {ex.Message}");
+                        }
+                    }
+                }
+                else
+                {
+                    toCompute.Add(index);
+                }
+            }
+            Console.WriteLine($"缓存检查后实际需要计算 pHash 的图片：{toCompute.Count}/{candidates.Length}");
+
             if (toCompute.Count > 0)
             {
+                var totalWork = toCompute.Sum(index => GetHashWork(fileSizes[index]));
+                var completed = 0;
+                var phashEstimator = new ProgressEstimator(totalWork);
+                var phaseTimerPhash = Stopwatch.StartNew();
                 Ansi.HideCursor();
-                Console.Write($"图片 pHash 进度:{Effects.ProgressBar(40, 0)}(0/{toCompute.Count}) {estimator.Build(timer.Elapsed)}");
+                Console.Write($"pHash 进度:{Effects.ProgressBar(40, 0)}(0/{toCompute.Count}) {phashEstimator.Build(phaseTimerPhash.Elapsed)}");
                 try
                 {
                     Parallel.For(0, toCompute.Count, parallelOptions, i =>
@@ -169,7 +232,7 @@ namespace CustomTools.Tools
                             var entry = new ImageCacheEntry(
                                 contentId,
                                 fileSizes[index],
-                                fileWriteTicks[index],
+                                fileInfos[index].LastWriteTimeUtc.Ticks,
                                 hash);
                             try
                             {
@@ -180,12 +243,12 @@ namespace CustomTools.Tools
                                     dirtyDirs.Add(directory);
                                 }
                             }
-                            catch (Exception cacheException)
+                            catch (Exception ex)
                             {
                                 lock (consoleLock)
                                 {
                                     Ansi.ClearCurtLine();
-                                    Console.WriteLine($"图片 pHash 增量缓存写入失败：{Path.GetFileName(files[index])} {cacheException.Message}");
+                                    Console.WriteLine($"图片 pHash 增量缓存写入失败：{Path.GetFileName(files[index])} {ex.Message}");
                                 }
                             }
                         }
@@ -202,16 +265,16 @@ namespace CustomTools.Tools
                         var current = Interlocked.Increment(ref completed);
                         lock (consoleLock)
                         {
-                            estimator.Complete(GetHashWork(fileSizes[index]));
+                            phashEstimator.Complete(GetHashWork(fileSizes[index]));
                             Ansi.ClearCurtLine();
-                            Console.Write($"图片 pHash 进度:{Effects.ProgressBar(40, current / (float)toCompute.Count)}({current}/{toCompute.Count}) {estimator.Build(timer.Elapsed)}");
+                            Console.Write($"pHash 进度:{Effects.ProgressBar(40, current / (float)toCompute.Count)}({current}/{toCompute.Count}) {phashEstimator.Build(phaseTimerPhash.Elapsed)}");
                         }
                     });
                 }
                 finally
                 {
                     Ansi.ClearCurtLine();
-                    Console.Write($"图片 pHash 进度:{Effects.ProgressBar(40, 1)}({toCompute.Count}/{toCompute.Count}) {estimator.Build(timer.Elapsed)}");
+                    Console.Write($"pHash 进度:{Effects.ProgressBar(40, 1)}({toCompute.Count}/{toCompute.Count}) {phashEstimator.Build(phaseTimerPhash.Elapsed)}");
                     Ansi.ShowCursor();
                     Console.WriteLine();
                 }
@@ -220,7 +283,7 @@ namespace CustomTools.Tools
             UpdateImageCaches(caches, files, contentIds, dirtyDirs);
 
             var images = results.Where(item => item != null).Cast<ImageResult>().ToArray();
-            Console.WriteLine($"有效图片：{images.Length}，失败：{failedCount}");
+            Console.WriteLine($"有效图片：{images.Length}");
             if (images.Length < 2)
             {
                 MessageBox.Show(
@@ -239,6 +302,48 @@ namespace CustomTools.Tools
         }
 
         // 由 GPT-5 修改：加载增量日志并在结束后合并图片目录级 pHash 缓存
+
+        private static void CleanupOrphanCaches(string rootPath)
+        {
+            var enumerationOptions = new EnumerationOptions
+            {
+                RecurseSubdirectories = true,
+                IgnoreInaccessible = true,
+                AttributesToSkip = FileAttributes.ReparsePoint | FileAttributes.System
+            };
+
+            try
+            {
+                var directories = new List<string>(
+                    Directory.EnumerateDirectories(rootPath, "*", enumerationOptions));
+                directories.Add(Path.GetFullPath(rootPath));
+                foreach (var directory in directories)
+                {
+                    try
+                    {
+                        if (!ImageCheckCache.HasCacheFiles(directory))
+                        {
+                            continue;
+                        }
+
+                        var hasImage = Directory.EnumerateFiles(directory)
+                            .Any(file => ImageExtensions.Contains(Path.GetExtension(file)));
+                        if (!hasImage)
+                        {
+                            ImageCheckCache.DeleteOrphanFiles(directory);
+                        }
+                    }
+                    catch
+                    {
+                        // 单个目录无访问权限时继续清理其他目录
+                    }
+                }
+            }
+            catch
+            {
+                // 无法遍历根目录时保留现有缓存，不中断查重
+            }
+        }
 
         private static Dictionary<string, ImageDirectoryCache> LoadImageCaches(string[] files)
         {
@@ -572,6 +677,11 @@ namespace CustomTools.Tools
         {
             const long fixedWork = 2L * 1024 * 1024;
             return Math.Max(1, fileSize + fixedWork);
+        }
+
+        private static long GetContentIdWork(long fileSize)
+        {
+            return Math.Max(1, fileSize);
         }
 
         private static Process StartProcess(string fileName, string arguments)
