@@ -36,7 +36,8 @@
 		<!-- 由 GPT-5 修改：新增图片查重 pHash 目录缓存 -->
 		<!-- 由 GPT-5 修改：图片 pHash 缓存改为签名、内容 ID、pHash 三级结构 -->
 		<!-- 由 Codex 修改：视频 pHash 缓存改用 .video.phash.cache 命名并兼容迁移旧缓存 -->
-		<FileVersion>1.13.17</FileVersion>
+		<!-- 由 Codex 修改：内容 ID 阶段增加签名预检查和命中统计 -->
+		<FileVersion>1.13.18</FileVersion>
 
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>

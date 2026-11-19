@@ -92,7 +92,6 @@ namespace CustomTools.Tools
 
             var fileSizes = files.Select(file => new FileInfo(file).Length).ToArray();
             var contentIdWork = fileSizes.Select(EstimateContentIdReadBytes).ToArray();
-            var totalContentIdWork = contentIdWork.Sum();
 
             #endregion
 
@@ -150,11 +149,11 @@ namespace CustomTools.Tools
             var idKeys = new string[files.Length];
             var caches = LoadVideoCaches(files);
             var dirtyDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            int idDone = 0;
-            var contentIdEstimator = new ProgressEstimator(totalContentIdWork);
-            var phaseTimerId = Stopwatch.StartNew();
-            Ansi.HideCursor();
-            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 0)}(0/{total}) {contentIdEstimator.Build(phaseTimerId.Elapsed)}");
+
+            // 由 Codex 修改：先统计签名命中，再只对未命中文件计算内容 ID
+
+            var pendingIdFlags = new bool[total];
+            int signatureHitCount = 0;
             Parallel.For(0, total, parallelOptions, i =>
             {
                 var directory = Path.GetFullPath(Path.GetDirectoryName(files[i]) ?? ".");
@@ -175,9 +174,31 @@ namespace CustomTools.Tools
                     cachedList.Count == 1)
                 {
                     idKeys[i] = VideoCheckCache.ToKey(cachedList[0].Id);
+                    Interlocked.Increment(ref signatureHitCount);
                 }
                 else
                 {
+                    pendingIdFlags[i] = true;
+                }
+            });
+
+            var pendingIdIndices = Enumerable.Range(0, total)
+                .Where(i => pendingIdFlags[i])
+                .ToArray();
+            Console.WriteLine(
+                $"签名缓存命中：{signatureHitCount}/{total}，需要计算内容 ID：{pendingIdIndices.Length}/{total}");
+
+            if (pendingIdIndices.Length > 0)
+            {
+                int idDone = 0;
+                var pendingContentIdWork = pendingIdIndices.Sum(i => contentIdWork[i]);
+                var contentIdEstimator = new ProgressEstimator(pendingContentIdWork);
+                var phaseTimerId = Stopwatch.StartNew();
+                Ansi.HideCursor();
+                Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 0)}(0/{pendingIdIndices.Length}) {contentIdEstimator.Build(phaseTimerId.Elapsed)}");
+                Parallel.For(0, pendingIdIndices.Length, parallelOptions, pendingIndex =>
+                {
+                    var i = pendingIdIndices[pendingIndex];
                     try
                     {
                         idKeys[i] = VideoCheckCache.ToKey(VideoCheckCache.ComputeContentId(files[i]));
@@ -186,21 +207,25 @@ namespace CustomTools.Tools
                     {
                         idKeys[i] = string.Empty;
                     }
-                }
 
-                var current = Interlocked.Increment(ref idDone);
-                lock (consoleLock)
-                {
-                    var elapsed = phaseTimerId.Elapsed;
-                    contentIdEstimator.Complete(contentIdWork[i]);
-                    Ansi.ClearCurtLine();
-                    Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, current / (float)total)}({current}/{total}) {contentIdEstimator.Build(elapsed)}");
-                }
-            });
-            Ansi.ClearCurtLine();
-            Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 1)}({total}/{total}) {contentIdEstimator.Build(phaseTimerId.Elapsed)}");
-            Ansi.ShowCursor();
-            Console.WriteLine();
+                    var current = Interlocked.Increment(ref idDone);
+                    lock (consoleLock)
+                    {
+                        var elapsed = phaseTimerId.Elapsed;
+                        contentIdEstimator.Complete(contentIdWork[i]);
+                        Ansi.ClearCurtLine();
+                        Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, current / (float)pendingIdIndices.Length)}({current}/{pendingIdIndices.Length}) {contentIdEstimator.Build(elapsed)}");
+                    }
+                });
+                Ansi.ClearCurtLine();
+                Console.Write($"内容 ID 进度:{Effects.ProgressBar(40, 1)}({pendingIdIndices.Length}/{pendingIdIndices.Length}) {contentIdEstimator.Build(phaseTimerId.Elapsed)}");
+                Ansi.ShowCursor();
+                Console.WriteLine();
+            }
+            else
+            {
+                Console.WriteLine("内容 ID：全部命中签名缓存，无需计算");
+            }
 
             // 阶段2：只有存在时长相近同伴的视频才需要计算 pHash
             var candidates = FilterDurationCandidates(durations);
