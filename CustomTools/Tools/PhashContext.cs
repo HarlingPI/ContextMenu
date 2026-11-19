@@ -15,6 +15,28 @@ namespace CustomTools.Tools
         private const int FeatureSize = 32;
         private const int BlockSize = 16;
 
+        #region 由 GPT-5 添加：图片查重复用的哈希长度与距离计算
+
+        internal const int HashLength = BlockSize * BlockSize / 8;
+
+        internal static int Distance(ReadOnlySpan<byte> left, ReadOnlySpan<byte> right)
+        {
+            var count = Math.Min(left.Length, right.Length);
+            var distance = 0;
+            for (var i = 0; i < count; i++)
+            {
+                var value = (uint)(left[i] ^ right[i]);
+                while (value != 0)
+                {
+                    value &= value - 1;
+                    distance++;
+                }
+            }
+            return distance;
+        }
+
+        #endregion
+
         private readonly byte[] grayData = new byte[FeatureSize * FeatureSize];
         private readonly double[] dctIn = new double[FeatureSize];
         private readonly double[] dctOut = new double[FeatureSize];

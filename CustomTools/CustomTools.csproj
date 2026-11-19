@@ -31,7 +31,12 @@
 		<!-- 由 Codex 修改：包含查询增加剩余时间并调整结果树双击行为 -->
 		<!-- 由 Codex 修改：包含查询结果默认选中全部子节点 -->
 		<!-- 由 Codex 修改：包含查询父节点始终保持未勾选 -->
-		<FileVersion>1.13.12</FileVersion>
+		<!-- 由 GPT-5 修改：新增图片查重菜单与图标 -->
+		<!-- 由 GPT-5 修改：修复图片查重分组缩略图并缩小显示尺寸 -->
+		<!-- 由 GPT-5 修改：新增图片查重 pHash 目录缓存 -->
+		<!-- 由 GPT-5 修改：图片 pHash 缓存改为签名、内容 ID、pHash 三级结构 -->
+		<!-- 由 Codex 修改：视频 pHash 缓存改用 .video.phash.cache 命名并兼容迁移旧缓存 -->
+		<FileVersion>1.13.17</FileVersion>
 
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
@@ -47,6 +52,8 @@
 		<Content Include="Resources\Settings.ico" />
 		<!-- 由 Codex 添加：视频包含查询菜单图标 -->
 		<Content Include="Resources\VideoContainsQuery.ico" />
+		<!-- 由 GPT-5 添加：图片查重菜单图标 -->
+		<Content Include="Resources\ImageCheck.ico" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\..\NotNet\ConsoleKit\ConsoleKit.csproj" />

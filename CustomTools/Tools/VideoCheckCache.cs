@@ -96,8 +96,10 @@ namespace CustomTools.Tools
 
     internal static class VideoCheckCache
     {
-        private const string CacheFileName = ".phash.cache";
-        private const string DeltaFileName = ".phash.cache.delta";
+        private const string CacheFileName = ".video.phash.cache";
+        private const string DeltaFileName = ".video.phash.cache.delta";
+        private const string LegacyCacheFileName = ".phash.cache";
+        private const string LegacyDeltaFileName = ".phash.cache.delta";
         private const int IdLength = 16;
         private const int DeltaVersion = 1;
         private const int DeltaHeaderSize = 8;
@@ -123,6 +125,16 @@ namespace CustomTools.Tools
         public static string GetDeltaPath(string directory)
         {
             return Path.Combine(directory, DeltaFileName);
+        }
+
+        private static string GetLegacyCachePath(string directory)
+        {
+            return Path.Combine(directory, LegacyCacheFileName);
+        }
+
+        private static string GetLegacyDeltaPath(string directory)
+        {
+            return Path.Combine(directory, LegacyDeltaFileName);
         }
 
         public static string ToKey(byte[] id)
@@ -186,11 +198,35 @@ namespace CustomTools.Tools
 
         public static DirectoryCache Load(string directory)
         {
+            MigrateLegacyFiles(directory);
             CleanupStaleTemporaryFiles(directory);
 
             var cache = LoadBase(directory);
             LoadDelta(directory, cache);
             return cache;
+        }
+
+        // 由 Codex 修改：将旧版视频 pHash 缓存迁移到新的视频缓存文件名
+
+        private static void MigrateLegacyFiles(string directory)
+        {
+            TryMoveLegacyFile(GetLegacyCachePath(directory), GetCachePath(directory));
+            TryMoveLegacyFile(GetLegacyDeltaPath(directory), GetDeltaPath(directory));
+        }
+
+        private static void TryMoveLegacyFile(string legacyPath, string targetPath)
+        {
+            try
+            {
+                if (File.Exists(legacyPath) && !File.Exists(targetPath))
+                {
+                    File.Move(legacyPath, targetPath);
+                }
+            }
+            catch
+            {
+                // 迁移失败时继续使用现有正式缓存，不阻断查重流程
+            }
         }
 
         private static DirectoryCache LoadBase(string directory)
@@ -533,6 +569,7 @@ namespace CustomTools.Tools
         {
             File.Delete(GetCachePath(directory));
             File.Delete(GetDeltaPath(directory));
+            TryDeleteLegacyFiles(directory);
         }
 
         // 由 Codex 修改：将增量日志中的新增和删除记录合并进正式缓存
@@ -560,7 +597,7 @@ namespace CustomTools.Tools
             var path = GetCachePath(directory);
             var temporaryPath = Path.Combine(
                 directory,
-                $".phash.cache.{Environment.ProcessId}.{Guid.NewGuid():N}.tmp");
+                $".video.phash.cache.{Environment.ProcessId}.{Guid.NewGuid():N}.tmp");
             var list = entries as ICollection<CacheEntry> ?? new List<CacheEntry>(entries);
 
             // 由 Codex 修改：先写临时文件并落盘，再原子替换正式缓存
@@ -607,6 +644,7 @@ namespace CustomTools.Tools
 
                 File.Move(temporaryPath, path, true);
                 File.Delete(GetDeltaPath(directory));
+                TryDeleteLegacyFiles(directory);
             }
             finally
             {
@@ -617,6 +655,19 @@ namespace CustomTools.Tools
             }
         }
 
+        private static void TryDeleteLegacyFiles(string directory)
+        {
+            try
+            {
+                File.Delete(GetLegacyCachePath(directory));
+                File.Delete(GetLegacyDeltaPath(directory));
+            }
+            catch
+            {
+                // 旧版缓存清理失败不影响新缓存使用
+            }
+        }
+
         // 由 Codex 修改：清理异常退出遗留的旧临时缓存文件
 
         private static void CleanupStaleTemporaryFiles(string directory)
@@ -624,7 +675,8 @@ namespace CustomTools.Tools
             try
             {
                 var cutoff = DateTime.UtcNow.AddHours(-1);
-                foreach (var temporaryPath in Directory.EnumerateFiles(directory, ".phash.cache.*.tmp"))
+                foreach (var temporaryPath in Directory.EnumerateFiles(directory, ".video.phash.cache.*.tmp")
+                    .Concat(Directory.EnumerateFiles(directory, ".phash.cache.*.tmp")))
                 {
                     if (File.GetLastWriteTimeUtc(temporaryPath) < cutoff)
                     {

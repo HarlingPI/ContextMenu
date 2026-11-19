@@ -151,4 +151,8 @@
   <data name="VideoContainsQuery" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\VideoContainsQuery.ico;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <!-- 由 GPT-5 添加：图片查重菜单图标 -->
+  <data name="ImageCheck" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\ImageCheck.ico;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

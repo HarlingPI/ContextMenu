@@ -16,7 +16,10 @@ using System.Windows.Forms;
 
 namespace CustomTools.Tools
 {
-    [MenuItem("视频包含查询", 6, Catgray.File)]
+    // 由 GPT-5 修改：为图片查重菜单让出顺序
+
+    [MenuItem("视频包含查询", 7, Catgray.File)]
+
     public sealed class VideoContainsQuery : ITool
     {
         private const int MaximumCandidatesPerSource = 256;

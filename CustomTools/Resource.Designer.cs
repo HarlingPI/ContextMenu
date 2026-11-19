@@ -162,6 +162,20 @@ namespace CustomTools {
             }
         }
 
+        #region 由 GPT-5 添加：图片查重菜单图标
+
+        /// <summary>
+        ///   查找 System.Byte[] 类型的本地化资源。
+        /// </summary>
+        internal static byte[] ImageCheck {
+            get {
+                object obj = ResourceManager.GetObject("ImageCheck", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+
+        #endregion
+
         #endregion
     }
 }
