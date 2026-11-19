@@ -38,7 +38,8 @@
 		<!-- 由 Codex 修改：视频 pHash 缓存改用 .video.phash.cache 命名并兼容迁移旧缓存 -->
 		<!-- 由 Codex 修改：内容 ID 阶段增加签名预检查和命中统计 -->
 		<!-- 由 GPT-5 修改：清理已无图片目录残留的图片 pHash 缓存 -->
-		<FileVersion>1.13.19</FileVersion>
+		<!-- 由 GPT-5 修改：修复特殊 JPEG 缩略图并并行预生成 -->
+		<FileVersion>1.13.20</FileVersion>
 
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>

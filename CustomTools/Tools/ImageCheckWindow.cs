@@ -3,6 +3,7 @@
 #region 由 GPT-5 添加
 using PIToolKit.Public.Utils;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -250,6 +251,12 @@ namespace CustomTools.Tools
 
         private void BuildGroups()
         {
+            var orderedGroups = groups
+                .Select(group => group.Items.OrderByDescending(GetFileLength).ToArray())
+                .ToArray();
+            var preparedThumbnails = PrepareThumbnails(
+                orderedGroups.SelectMany(items => items).Select(item => item.FilePath));
+
             updatingChecks = true;
             treeView.BeginUpdate();
             try
@@ -263,9 +270,9 @@ namespace CustomTools.Tools
                     var group = groups[i];
                     var root = new TreeNode($"可能相同的图片组 {i + 1}（{group.Items.Count} 个）");
                     var groupImageIndex = -1;
-                    foreach (var item in group.Items.OrderByDescending(GetFileLength))
+                    foreach (var item in orderedGroups[i])
                     {
-                        var imageIndex = AddThumbnail(item.FilePath);
+                        var imageIndex = AddPreparedThumbnail(preparedThumbnails, item.FilePath);
                         if (groupImageIndex < 0 && imageIndex >= 0)
                         {
                             groupImageIndex = imageIndex;
@@ -288,6 +295,10 @@ namespace CustomTools.Tools
             }
             finally
             {
+                foreach (var bitmap in preparedThumbnails.Values)
+                {
+                    bitmap.Dispose();
+                }
                 treeView.EndUpdate();
                 updatingChecks = false;
             }
@@ -296,41 +307,151 @@ namespace CustomTools.Tools
             UpdateSummaryLabel();
         }
 
-        private int AddThumbnail(string file)
+        private static ConcurrentDictionary<string, Bitmap> PrepareThumbnails(IEnumerable<string> files)
         {
-            try
+            var prepared = new ConcurrentDictionary<string, Bitmap>(StringComparer.OrdinalIgnoreCase);
+            var parallelOptions = new ParallelOptions
             {
-                using var stream = new FileStream(
-                    file,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    FileShare.ReadWrite | FileShare.Delete);
-                using var source = Image.FromStream(stream, false, true);
-                var bitmap = new Bitmap(ThumbnailSize, ThumbnailSize, PixelFormat.Format32bppArgb);
-                using (var graphics = Graphics.FromImage(bitmap))
+                MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount, 1, 8)
+            };
+            Parallel.ForEach(files.Distinct(StringComparer.OrdinalIgnoreCase), parallelOptions, file =>
+            {
+                try
                 {
-                    graphics.Clear(Color.FromArgb(24, 24, 24));
-                    graphics.CompositingQuality = CompositingQuality.HighQuality;
-                    graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    // 由 GPT-5 修改：特殊 JPEG 在 GDI+ 解码失败时改用 FFmpeg 生成缩略图
 
-                    var scale = Math.Min(
-                        (double)ThumbnailSize / source.Width,
-                        (double)ThumbnailSize / source.Height);
-                    var width = Math.Max(1, (int)Math.Round(source.Width * scale));
-                    var height = Math.Max(1, (int)Math.Round(source.Height * scale));
-                    var x = (ThumbnailSize - width) / 2;
-                    var y = (ThumbnailSize - height) / 2;
-                    graphics.DrawImage(source, new Rectangle(x, y, width, height));
+                    prepared[file] = CreateThumbnail(file);
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"缩略图生成失败：{Path.GetFileName(file)} {ex.Message}");
+                }
+            });
+            return prepared;
+        }
 
-                thumbnails.Images.Add(bitmap);
-                return thumbnails.Images.Count - 1;
-            }
-            catch
+        private int AddPreparedThumbnail(
+            ConcurrentDictionary<string, Bitmap> prepared,
+            string file)
+        {
+            if (!prepared.TryRemove(file, out var bitmap))
             {
                 return -1;
             }
+
+            try
+            {
+                thumbnails.Images.Add(bitmap);
+                return thumbnails.Images.Count - 1;
+            }
+            catch (Exception ex)
+            {
+                bitmap.Dispose();
+                Console.WriteLine($"缩略图添加失败：{Path.GetFileName(file)} {ex.Message}");
+                return -1;
+            }
+        }
+
+        private static Bitmap CreateThumbnail(string file)
+        {
+            try
+            {
+                return CreateThumbnailWithDrawing(file);
+            }
+            catch
+            {
+                return CreateThumbnailWithFfmpeg(file);
+            }
+        }
+
+        private static Bitmap CreateThumbnailWithDrawing(string file)
+        {
+            using var stream = new FileStream(
+                file,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete);
+            using var source = Image.FromStream(stream, false, true);
+            var bitmap = new Bitmap(ThumbnailSize, ThumbnailSize, PixelFormat.Format32bppArgb);
+            using var graphics = Graphics.FromImage(bitmap);
+            graphics.Clear(Color.FromArgb(24, 24, 24));
+            graphics.CompositingQuality = CompositingQuality.HighQuality;
+            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+            var scale = Math.Min(
+                (double)ThumbnailSize / source.Width,
+                (double)ThumbnailSize / source.Height);
+            var width = Math.Max(1, (int)Math.Round(source.Width * scale));
+            var height = Math.Max(1, (int)Math.Round(source.Height * scale));
+            var x = (ThumbnailSize - width) / 2;
+            var y = (ThumbnailSize - height) / 2;
+            graphics.DrawImage(source, new Rectangle(x, y, width, height));
+            return bitmap;
+        }
+
+        private static Bitmap CreateThumbnailWithFfmpeg(string file)
+        {
+            var ffmpegPath = Path.Combine(AppContext.BaseDirectory, "FFmpeg", "ffmpeg.exe");
+            if (!File.Exists(ffmpegPath))
+            {
+                throw new FileNotFoundException("未找到 FFmpeg，无法解码该图片", ffmpegPath);
+            }
+
+            var filter =
+                $"scale={ThumbnailSize}:{ThumbnailSize}:force_original_aspect_ratio=decrease:flags=lanczos," +
+                $"pad={ThumbnailSize}:{ThumbnailSize}:(ow-iw)/2:(oh-ih)/2:color=0x181818";
+            var arguments =
+                $"-hide_banner -loglevel error -nostdin -threads 1 -i \"{file}\" -frames:v 1 " +
+                $"-vf \"{filter}\" -an -f rawvideo -pix_fmt bgra -";
+            using var process = Process.Start(new ProcessStartInfo(ffmpegPath, arguments)
+            {
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            }) ?? throw new InvalidOperationException("无法启动 FFmpeg");
+            var errorTask = process.StandardError.ReadToEndAsync();
+            var pixelCount = ThumbnailSize * ThumbnailSize;
+            var pixels = new byte[pixelCount * 4];
+            var total = 0;
+            while (total < pixels.Length)
+            {
+                var read = process.StandardOutput.BaseStream.Read(pixels, total, pixels.Length - total);
+                if (read <= 0)
+                {
+                    break;
+                }
+                total += read;
+            }
+
+            process.WaitForExit();
+            var error = errorTask.Result;
+            if (process.ExitCode != 0 || total != pixels.Length)
+            {
+                throw new InvalidDataException(
+                    string.IsNullOrWhiteSpace(error) ? "FFmpeg 缩略图解码失败" : error.Trim());
+            }
+
+            var bitmap = new Bitmap(
+                ThumbnailSize,
+                ThumbnailSize,
+                PixelFormat.Format32bppArgb);
+            var rectangle = new Rectangle(0, 0, ThumbnailSize, ThumbnailSize);
+            var data = bitmap.LockBits(
+                rectangle,
+                ImageLockMode.WriteOnly,
+                PixelFormat.Format32bppArgb);
+            try
+            {
+                Marshal.Copy(pixels, 0, data.Scan0, pixels.Length);
+            }
+            finally
+            {
+                bitmap.UnlockBits(data);
+            }
+            return bitmap;
         }
 
         private void ClearThumbnails()
